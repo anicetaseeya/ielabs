@@ -500,10 +500,8 @@ body{font-family:var(--fb);background:var(--black);color:var(--white);min-height
 // Change this to your deployed backend URL, e.g. "https://ieulabs-api.onrender.com"
 var API = (function(){
   var h = window.location.hostname;
-  // if opened as file or localhost frontend, point to local backend
   if(h==='localhost'||h===''||h==='127.0.0.1') return 'http://localhost:3001';
-  // if frontend is on same origin as backend
-  return window.location.origin;
+  return 'https://ielabs.onrender.com';
 })();
 var ADMIN_SECRET_LOCAL = ''; // filled after login
 
