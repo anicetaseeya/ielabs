@@ -1,0 +1,979 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>IEU Labs — Matching System</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@300;400;600;700;800;900&family=Barlow:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --black:#0a0a0a;--off:#111;--dark:#181818;--mid:#222;--line:rgba(255,255,255,.1);
+  --line2:rgba(255,255,255,.05);--white:#fff;--dim:rgba(255,255,255,.55);
+  --dimmer:rgba(255,255,255,.28);--teal:#3dbfb8;--coral:#e05a5a;--amber:#f0a830;
+  --gold:#f0c040;--green:#3dbf80;--blue:#4a9eff;--red:#e05a5a;
+  --green-bg:rgba(61,191,128,.12);--red-bg:rgba(224,90,90,.12);
+  --blue-bg:rgba(74,158,255,.12);--amber-bg:rgba(240,168,48,.12);
+  --fd:'Barlow Condensed',sans-serif;--fb:'Barlow',sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:var(--fb);background:var(--black);color:var(--white);min-height:100vh;overflow-x:hidden;}
+.screen{display:none;min-height:100vh;flex-direction:column;}
+.screen.active{display:flex;}
+
+/* ── ROLE ── */
+#sr{align-items:center;justify-content:center;position:relative;overflow:hidden;}
+.rbg{position:absolute;inset:0;
+  background:radial-gradient(ellipse 60% 40% at 20% 50%,rgba(61,191,184,.07) 0%,transparent 60%),
+             radial-gradient(ellipse 60% 40% at 80% 50%,rgba(240,168,48,.07) 0%,transparent 60%);}
+.rgrid{position:absolute;inset:0;
+  background-image:linear-gradient(rgba(255,255,255,.03) 1px,transparent 1px),
+                   linear-gradient(90deg,rgba(255,255,255,.03) 1px,transparent 1px);
+  background-size:80px 80px;}
+.rc{position:relative;z-index:1;text-align:center;padding:2rem;}
+.rlogo{font-family:var(--fd);font-size:clamp(3rem,8vw,5.5rem);font-weight:900;letter-spacing:-.02em;line-height:1;margin-bottom:.2em;}
+.rlogo em{font-style:normal;color:transparent;-webkit-text-stroke:2px var(--white);}
+.rkick{font-family:var(--fd);font-size:.8rem;font-weight:700;letter-spacing:.28em;color:var(--teal);text-transform:uppercase;margin-bottom:3rem;}
+.rprompt{font-size:.75rem;letter-spacing:.18em;color:var(--dimmer);text-transform:uppercase;margin-bottom:1.5rem;}
+.rcards{display:flex;gap:1.5rem;justify-content:center;flex-wrap:wrap;}
+.rcard{width:260px;padding:2rem 1.75rem;border:1px solid var(--line);background:var(--dark);cursor:pointer;transition:all .25s;text-align:left;position:relative;overflow:hidden;}
+.rcard::before{content:'';position:absolute;bottom:0;left:0;right:0;height:3px;transform:scaleX(0);transform-origin:left;transition:transform .3s;}
+.rcard.student::before{background:var(--teal);}
+.rcard.admin::before{background:var(--amber);}
+.rcard:hover{border-color:rgba(255,255,255,.25);transform:translateY(-4px);}
+.rcard:hover::before{transform:scaleX(1);}
+.rcard-icon{font-size:2rem;margin-bottom:1rem;}
+.rcard-title{font-family:var(--fd);font-size:1.6rem;font-weight:800;letter-spacing:.02em;margin-bottom:.4rem;}
+.rcard.student .rcard-title{color:var(--teal);}
+.rcard.admin .rcard-title{color:var(--amber);}
+.rcard-desc{font-size:.83rem;color:var(--dim);line-height:1.6;}
+.rcard-cta{display:flex;align-items:center;gap:6px;font-family:var(--fd);font-size:.88rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;margin-top:1.5rem;color:var(--dimmer);transition:color .2s;}
+.rcard:hover .rcard-cta{color:var(--white);}
+
+/* ── SHARED HEADER ── */
+.hdr{border-bottom:1px solid var(--line);padding:0 2rem;height:56px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:50;flex-shrink:0;}
+.hdr.student{background:var(--off);}
+.hdr.admin{background:#0e0a00;border-bottom-color:var(--amber);}
+.hlogo{font-family:var(--fd);font-size:1.35rem;font-weight:900;letter-spacing:.05em;}
+.hlogo em{font-style:normal;}
+.hdr.student .hlogo em{color:var(--teal);}
+.hdr.admin .hlogo em{color:var(--amber);}
+.hdr.admin .hlogo small{font-size:.55rem;letter-spacing:.2em;color:var(--amber);opacity:.55;margin-left:8px;}
+.hnav{display:flex;}
+.htab{height:56px;padding:0 18px;display:flex;align-items:center;font-family:var(--fd);font-size:.78rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--dimmer);cursor:pointer;border:none;background:transparent;border-bottom:2px solid transparent;transition:all .2s;}
+.hdr.student .htab.active{color:var(--white);border-bottom-color:var(--teal);}
+.hdr.admin .htab.active{color:var(--amber);border-bottom-color:var(--amber);}
+.hdr.admin .htab{color:rgba(240,168,48,.45);}
+.hdr.admin .htab:hover:not(.active){color:var(--amber);}
+.htab:hover:not(.active){color:var(--white);}
+.back-btn{font-size:.72rem;font-family:var(--fd);font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--dimmer);background:none;border:1px solid var(--line);padding:6px 14px;cursor:pointer;transition:all .2s;}
+.back-btn:hover{color:var(--white);border-color:rgba(255,255,255,.3);}
+
+/* ── PANELS ── */
+.panel{display:none;flex:1;overflow-y:auto;}
+.panel.active{display:block;}
+
+/* ── EXPLORE ── */
+.explore-hero{padding:4rem 2rem 3rem;background:linear-gradient(180deg,var(--dark) 0%,var(--black) 100%);border-bottom:1px solid var(--line);}
+.eyebrow{font-family:var(--fd);font-size:.72rem;font-weight:700;letter-spacing:.3em;text-transform:uppercase;color:var(--teal);margin-bottom:1rem;}
+.big-title{font-family:var(--fd);font-size:clamp(2.5rem,6vw,5rem);font-weight:900;line-height:.95;letter-spacing:-.01em;margin-bottom:1.2rem;}
+.big-title em{font-style:normal;color:var(--teal);}
+.hero-sub{font-size:.92rem;color:var(--dim);max-width:520px;line-height:1.7;}
+.fbar{padding:1.5rem 2rem;display:flex;gap:8px;flex-wrap:wrap;border-bottom:1px solid var(--line2);}
+.fchip{padding:5px 16px;border:1px solid var(--line);background:transparent;font-family:var(--fd);font-size:.75rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--dim);cursor:pointer;transition:all .15s;}
+.fchip.active{background:var(--teal);border-color:var(--teal);color:var(--black);}
+.fchip:hover:not(.active){border-color:rgba(255,255,255,.3);color:var(--white);}
+.labs-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:1px;background:var(--line2);border-top:1px solid var(--line2);border-left:1px solid var(--line2);}
+.lcard{background:var(--black);padding:1.75rem;cursor:pointer;transition:background .2s;border-right:1px solid var(--line2);border-bottom:1px solid var(--line2);}
+.lcard:hover{background:var(--dark);}
+.lcard-acc{width:32px;height:3px;margin-bottom:1rem;}
+.lcard-type{font-size:.63rem;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:var(--dimmer);margin-bottom:.4rem;}
+.lcard-name{font-family:var(--fd);font-size:1.45rem;font-weight:800;letter-spacing:.02em;line-height:1;margin-bottom:.5rem;}
+.lcard-desc{font-size:.8rem;color:var(--dim);line-height:1.55;margin-bottom:1rem;}
+.lcard-foot{display:flex;align-items:center;justify-content:space-between;}
+.lcard-seats{font-size:.7rem;color:var(--dimmer);}
+.lcard-cta{font-family:var(--fd);font-size:.72rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--teal);}
+
+/* ── APPLY ── */
+.apply-wrap{max-width:1100px;margin:0 auto;padding:3rem 2rem;display:grid;grid-template-columns:1fr 340px;gap:2.5rem;align-items:start;}
+@media(max-width:800px){.apply-wrap{grid-template-columns:1fr;}}
+.sec-head{font-family:var(--fd);font-size:2rem;font-weight:900;letter-spacing:-.01em;margin-bottom:.3rem;}
+.sec-sub{font-size:.83rem;color:var(--dim);margin-bottom:2rem;line-height:1.6;}
+.dcard{background:var(--dark);border:1px solid var(--line);padding:1.75rem;margin-bottom:1.5rem;}
+.ctitle{font-family:var(--fd);font-size:1.05rem;font-weight:700;letter-spacing:.05em;text-transform:uppercase;margin-bottom:.2rem;}
+.csub{font-size:.78rem;color:var(--dim);margin-bottom:1.3rem;}
+.fgrid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.frow{margin-bottom:.9rem;}
+.flabel{font-size:.68rem;font-weight:700;letter-spacing:.15em;text-transform:uppercase;color:var(--dimmer);margin-bottom:5px;display:block;}
+.finput,.fsel{width:100%;padding:10px 14px;background:var(--mid);border:1px solid var(--line);font-family:var(--fb);font-size:.86rem;color:var(--white);outline:none;-webkit-appearance:none;appearance:none;transition:border .15s;}
+.finput:focus,.fsel:focus{border-color:rgba(255,255,255,.35);}
+.finput::placeholder{color:var(--dimmer);}
+.fsel option{background:var(--dark);}
+.rank-label{font-size:.67rem;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:var(--dimmer);margin-bottom:9px;}
+.rank-rows{display:flex;flex-direction:column;gap:6px;margin-bottom:1.4rem;}
+.rrow{display:flex;align-items:center;gap:10px;padding:11px 14px;background:var(--mid);border:1px dashed rgba(255,255,255,.12);min-height:48px;transition:border-color .15s;}
+.rrow.filled{border-style:solid;border-color:var(--teal);background:rgba(61,191,184,.06);}
+.rnum{font-family:var(--fd);font-size:1.1rem;font-weight:900;color:var(--teal);min-width:22px;}
+.rlab{font-size:.86rem;font-weight:500;flex:1;}
+.rph{font-size:.8rem;color:var(--dimmer);flex:1;}
+.rrm{background:none;border:none;color:var(--dimmer);cursor:pointer;font-size:1.1rem;padding:0 4px;transition:color .15s;}
+.rrm:hover{color:var(--red);}
+.avail-list{display:flex;flex-direction:column;gap:4px;max-height:290px;overflow-y:auto;}
+.aitem{display:flex;align-items:center;justify-content:space-between;padding:7px 11px;border:1px solid var(--line2);background:var(--mid);font-size:.8rem;transition:border-color .15s;}
+.aitem:hover:not(.ranked){border-color:rgba(255,255,255,.2);}
+.aitem.ranked{opacity:.3;}
+.achip{font-size:.68rem;font-weight:700;letter-spacing:.08em;padding:3px 10px;background:rgba(61,191,184,.15);color:var(--teal);border:1px solid rgba(61,191,184,.3);cursor:pointer;font-family:var(--fd);text-transform:uppercase;transition:all .15s;}
+.achip:hover{background:var(--teal);color:var(--black);}
+.big-btn{width:100%;padding:14px;background:var(--teal);color:var(--black);border:none;font-family:var(--fd);font-size:1rem;font-weight:900;letter-spacing:.12em;text-transform:uppercase;cursor:pointer;transition:all .2s;margin-top:.5rem;}
+.big-btn:hover:not(:disabled){background:#50d4cc;transform:translateY(-1px);}
+.big-btn:disabled{opacity:.35;cursor:not-allowed;transform:none;}
+.da-box{background:var(--dark);border:1px solid var(--line);padding:1.5rem;margin-bottom:1.2rem;}
+.da-title{font-family:var(--fd);font-size:.75rem;font-weight:700;letter-spacing:.22em;text-transform:uppercase;color:var(--teal);margin-bottom:1rem;}
+.da-steps{display:flex;flex-direction:column;gap:10px;}
+.da-step{display:flex;gap:10px;align-items:flex-start;}
+.da-n{min-width:20px;height:20px;background:var(--teal);color:var(--black);display:flex;align-items:center;justify-content:center;font-family:var(--fd);font-size:.68rem;font-weight:900;flex-shrink:0;}
+.da-txt{font-size:.79rem;color:var(--dim);line-height:1.55;}
+.guar{margin-top:1rem;padding:11px;background:rgba(61,191,184,.08);border:1px solid rgba(61,191,184,.25);font-size:.77rem;color:var(--teal);line-height:1.55;}
+
+/* ── STATUS ── */
+.status-wrap{max-width:680px;margin:0 auto;padding:3rem 2rem;}
+.tl{display:flex;flex-direction:column;gap:0;}
+.tl-item{display:flex;gap:1.5rem;padding:1.1rem 0;border-bottom:1px solid var(--line2);}
+.tl-dot{width:12px;height:12px;border-radius:50%;flex-shrink:0;margin-top:4px;border:2px solid var(--dimmer);}
+.tl-dot.done{background:var(--green);border-color:var(--green);}
+.tl-dot.act{background:var(--teal);border-color:var(--teal);}
+.tl-lbl{font-family:var(--fd);font-size:1rem;font-weight:700;letter-spacing:.03em;margin-bottom:3px;}
+.tl-sub{font-size:.79rem;color:var(--dim);}
+.held-badge{display:inline-block;padding:3px 12px;background:rgba(240,168,48,.15);border:1px solid rgba(240,168,48,.35);font-size:.73rem;color:var(--amber);margin-top:6px;}
+.result-card{background:rgba(61,191,184,.06);border:1px solid rgba(61,191,184,.3);padding:1.5rem;margin-top:1.5rem;}
+.result-label{font-size:.65rem;font-weight:700;letter-spacing:.22em;text-transform:uppercase;color:var(--dimmer);margin-bottom:.4rem;}
+.result-lab{font-family:var(--fd);font-size:2rem;font-weight:900;color:var(--teal);margin-bottom:.3rem;}
+.result-rank{font-size:.82rem;color:var(--dim);}
+
+/* ── ADMIN: DASHBOARD ── */
+.dash-wrap{padding:2.5rem 2rem;max-width:1200px;margin:0 auto;}
+.phase-bar{background:var(--dark);border:1px solid var(--line);padding:1.5rem 2rem;margin-bottom:2rem;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:1rem;}
+.phase-lbl{font-size:.67rem;font-weight:700;letter-spacing:.22em;text-transform:uppercase;color:var(--dimmer);margin-bottom:3px;}
+.phase-val{font-family:var(--fd);font-size:1.8rem;font-weight:900;color:var(--amber);}
+.phase-acts{display:flex;gap:10px;flex-wrap:wrap;}
+.abtn{padding:10px 22px;font-family:var(--fd);font-size:.8rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;border:none;cursor:pointer;transition:all .2s;}
+.abtn.primary{background:var(--amber);color:var(--black);}
+.abtn.primary:hover{background:#f5c050;}
+.abtn.danger{background:var(--red-bg);color:var(--red);border:1px solid rgba(224,90,90,.3);}
+.abtn.danger:hover{background:rgba(224,90,90,.25);}
+.abtn:disabled{opacity:.35;cursor:not-allowed;}
+.kpi-row{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--line2);border:1px solid var(--line2);margin-bottom:2rem;}
+@media(max-width:700px){.kpi-row{grid-template-columns:repeat(2,1fr);}}
+.kpi{background:var(--dark);padding:1.2rem 1.5rem;}
+.kpi-val{font-family:var(--fd);font-size:2.2rem;font-weight:900;line-height:1;}
+.kpi-lbl{font-size:.68rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--dimmer);margin-top:5px;}
+.dash-grid{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--line2);border:1px solid var(--line2);}
+@media(max-width:700px){.dash-grid{grid-template-columns:1fr;}}
+.dash-col{background:var(--dark);padding:1.5rem;border-right:1px solid var(--line2);}
+.dash-col-title{font-size:.65rem;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:var(--dimmer);margin-bottom:1rem;}
+
+/* ── ADMIN: ROUNDS ── */
+.rounds-wrap{padding:2.5rem 2rem;max-width:1200px;margin:0 auto;}
+.round-ctrl{display:flex;align-items:center;gap:14px;flex-wrap:wrap;}
+.stepper{display:flex;border:1px solid var(--line);}
+.step-btn{width:40px;height:40px;background:var(--dark);border:none;font-size:1rem;color:var(--dim);cursor:pointer;transition:all .15s;}
+.step-btn:hover:not(:disabled){background:var(--mid);color:var(--white);}
+.step-btn:disabled{opacity:.3;cursor:not-allowed;}
+.step-disp{padding:0 20px;height:40px;display:flex;align-items:center;font-family:var(--fd);font-size:.82rem;font-weight:700;letter-spacing:.1em;background:var(--mid);white-space:nowrap;}
+.status-chip{padding:6px 14px;font-size:.68rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;border:1px solid;}
+.chip-wait{border-color:var(--line);color:var(--dimmer);}
+.chip-run{border-color:var(--amber);color:var(--amber);background:var(--amber-bg);}
+.chip-done{border-color:var(--green);color:var(--green);background:var(--green-bg);}
+.rounds-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:1px;background:var(--line2);border:1px solid var(--line2);}
+.rcol{background:var(--dark);padding:1.5rem;border-right:1px solid var(--line2);border-bottom:1px solid var(--line2);}
+.rcol.cur{background:rgba(240,168,48,.04);outline:1px solid var(--amber);}
+.rc-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:.9rem;}
+.rc-num{font-family:var(--fd);font-size:1.6rem;font-weight:900;color:var(--amber);}
+.rbadge{font-size:.63rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;padding:2px 9px;border:1px solid;}
+.rb-p{border-color:rgba(74,158,255,.5);color:var(--blue);background:var(--blue-bg);}
+.rb-r{border-color:rgba(224,90,90,.5);color:var(--red);background:var(--red-bg);}
+.rb-s{border-color:rgba(61,191,128,.5);color:var(--green);background:var(--green-bg);}
+.rc-stat{font-size:.77rem;color:var(--dim);margin-bottom:5px;}
+.rc-evs{display:flex;flex-direction:column;gap:3px;margin-top:9px;max-height:130px;overflow-y:auto;}
+.rc-ev{font-size:.73rem;padding:3px 8px;border-left:2px solid;}
+.ev-p{border-color:var(--blue);color:var(--dim);}
+.ev-r{border-color:var(--red);color:var(--dim);}
+.ev-h{border-color:var(--green);color:var(--dim);}
+
+/* ── ADMIN: RESULTS ── */
+.results-wrap{padding:2.5rem 2rem;max-width:1200px;margin:0 auto;}
+.stable-bar{background:var(--green-bg);border:1px solid rgba(61,191,128,.3);padding:1.2rem 1.75rem;margin-bottom:2rem;display:flex;align-items:center;gap:12px;}
+.dt{width:100%;border-collapse:separate;border-spacing:0 2px;}
+.dt th{font-size:.62rem;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--dimmer);padding:5px 12px;text-align:left;}
+.dt td{background:var(--dark);padding:10px 12px;font-size:.84rem;}
+.dt td:first-child{border-left:1px solid var(--line2);}
+.dt td:last-child{border-right:1px solid var(--line2);}
+.dt tr:hover td{background:var(--mid);}
+.av{width:29px;height:29px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:var(--fd);font-size:.65rem;font-weight:900;flex-shrink:0;}
+.si{display:flex;align-items:center;gap:8px;}
+.rpill{padding:2px 10px;font-size:.7rem;font-weight:700;letter-spacing:.05em;border:1px solid;}
+.rp1{border-color:rgba(61,191,128,.5);color:var(--green);background:var(--green-bg);}
+.rp2{border-color:rgba(74,158,255,.5);color:var(--blue);background:var(--blue-bg);}
+.rp3{border-color:rgba(240,168,48,.5);color:var(--amber);background:var(--amber-bg);}
+.rpX{border-color:var(--line);color:var(--dimmer);}
+.pbar-w{display:flex;align-items:center;gap:7px;}
+.pbar{height:3px;background:rgba(240,168,48,.18);width:60px;}
+.pfill{height:100%;background:var(--amber);}
+
+/* ── OVERLAY ── */
+.ov{display:none;position:fixed;inset:0;z-index:200;background:rgba(0,0,0,.87);align-items:flex-end;justify-content:center;padding:1rem;}
+.ov.open{display:flex;}
+.ov-panel{background:var(--dark);border:1px solid var(--line);max-width:600px;width:100%;padding:2rem;max-height:85vh;overflow-y:auto;position:relative;animation:su .3s ease;}
+@keyframes su{from{transform:translateY(24px);opacity:0;}to{transform:translateY(0);opacity:1;}}
+.ov-close{position:absolute;top:1rem;right:1rem;background:var(--mid);border:none;width:30px;height:30px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--dim);font-size:.88rem;}
+.ov-type{font-size:.62rem;font-weight:700;letter-spacing:.2em;text-transform:uppercase;margin-bottom:.4rem;}
+.ov-name{font-family:var(--fd);font-size:2rem;font-weight:900;letter-spacing:.02em;margin-bottom:.4rem;}
+.ov-tag{font-size:.88rem;color:var(--dim);margin-bottom:1.4rem;line-height:1.6;}
+.ov-sec{font-size:.62rem;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:var(--dimmer);margin:1.1rem 0 .5rem;}
+.ov-tasks{font-size:.83rem;color:var(--dim);line-height:1.65;}
+.skills{display:flex;flex-wrap:wrap;gap:5px;}
+.skill{padding:4px 11px;border:1px solid var(--line);font-size:.73rem;color:var(--dim);}
+.ov-add{width:100%;margin-top:1.5rem;padding:12px;background:var(--teal);color:var(--black);border:none;font-family:var(--fd);font-size:.92rem;font-weight:900;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;transition:all .2s;}
+.ov-add:hover:not(:disabled){background:#50d4cc;}
+.ov-add:disabled{opacity:.4;cursor:not-allowed;}
+
+/* ── CONGRATS ── */
+.cov{display:none;position:fixed;inset:0;z-index:300;background:rgba(0,0,0,.93);align-items:center;justify-content:center;padding:2rem;}
+.cov.open{display:flex;}
+.cbox{background:var(--dark);border:1px solid var(--line);max-width:480px;width:100%;padding:2.5rem;text-align:center;animation:su .4s ease;}
+.ci{font-size:2.8rem;margin-bottom:1rem;}
+.ctit{font-family:var(--fd);font-size:2rem;font-weight:900;margin-bottom:.25rem;}
+.cname{font-size:.83rem;color:var(--dim);margin-bottom:1.1rem;}
+.cll{font-size:.63rem;font-weight:700;letter-spacing:.22em;text-transform:uppercase;color:var(--dimmer);margin-bottom:.4rem;}
+.clab{font-family:var(--fd);font-size:1.5rem;font-weight:900;color:var(--teal);border:1px solid rgba(61,191,184,.35);padding:13px 26px;display:inline-block;margin-bottom:1.1rem;}
+.csub{font-size:.81rem;color:var(--dim);line-height:1.65;margin-bottom:1.4rem;}
+.ccls{padding:11px 30px;background:var(--teal);color:var(--black);border:none;font-family:var(--fd);font-size:.88rem;font-weight:900;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;}
+
+/* ── SPINNER / LOADING ── */
+.spin{display:inline-block;width:16px;height:16px;border:2px solid rgba(255,255,255,.2);border-top-color:var(--white);border-radius:50%;animation:spin .7s linear infinite;margin-right:6px;vertical-align:middle;}
+@keyframes spin{to{transform:rotate(360deg);}}
+.loading-msg{padding:2rem;color:var(--dimmer);font-size:.85rem;text-align:center;}
+
+/* ── TOAST ── */
+.toast{position:fixed;bottom:2rem;left:50%;transform:translateX(-50%) translateY(80px);background:var(--mid);border:1px solid var(--line);color:var(--white);padding:10px 22px;font-size:.83rem;z-index:400;transition:transform .3s;white-space:nowrap;}
+.toast.show{transform:translateX(-50%) translateY(0);}
+::-webkit-scrollbar{width:4px;}::-webkit-scrollbar-track{background:transparent;}::-webkit-scrollbar-thumb{background:var(--line);}
+</style>
+</head>
+<body>
+
+<!-- ══ ROLE SELECT ══════════════════════════════════════ -->
+<div class="screen active" id="sr">
+  <div class="rbg"></div><div class="rgrid"></div>
+  <div class="rc">
+    <div class="rkick">Mechanism Design · 2025–26</div>
+    <div class="rlogo">IEU<em>LABS</em></div>
+    <div style="font-family:var(--fd);font-size:.75rem;letter-spacing:.28em;color:var(--dimmer);text-transform:uppercase;margin-bottom:3rem;">Deferred Acceptance Matching System</div>
+    <div class="rprompt">Choose your role to enter</div>
+    <div class="rcards">
+      <div class="rcard student" onclick="enterStudent()">
+        <div class="rcard-icon">◎</div>
+        <div class="rcard-title">Student</div>
+        <div class="rcard-desc">Explore labs, submit your genuine preference ranking, and track your status through the matching rounds.</div>
+        <div class="rcard-cta">Enter →</div>
+      </div>
+      <div class="rcard admin" onclick="showAdminLogin()">
+        <div class="rcard-icon">⊞</div>
+        <div class="rcard-title">Admin</div>
+        <div class="rcard-desc">Monitor submissions, run the DA algorithm round by round, and publish final stable results to students.</div>
+        <div class="rcard-cta">Enter →</div>
+      </div>
+    </div>
+    <div id="admin-login-box" style="display:none;margin-top:2rem;">
+      <input id="admin-pw" type="password" class="finput" placeholder="Admin password" style="width:200px;text-align:center;" onkeydown="if(event.key==='Enter')tryAdminLogin()">
+      <button onclick="tryAdminLogin()" style="margin-left:8px;padding:10px 18px;background:var(--amber);color:var(--black);border:none;font-family:var(--fd);font-weight:700;font-size:.8rem;cursor:pointer;">Enter</button>
+    </div>
+    <div id="server-status" style="margin-top:2.5rem;font-size:.72rem;color:var(--dimmer);letter-spacing:.08em;"></div>
+  </div>
+</div>
+
+<!-- ══ STUDENT ═══════════════════════════════════════════ -->
+<div class="screen" id="ss">
+  <header class="hdr student">
+    <div class="hlogo">IEU<em>LABS</em></div>
+    <nav class="hnav">
+      <button class="htab active" onclick="sTab('explore',this)">Explore</button>
+      <button class="htab" onclick="sTab('apply',this)">Apply</button>
+      <button class="htab" onclick="sTab('status',this)">My Status</button>
+    </nav>
+    <button class="back-btn" onclick="goRole()">← Switch Role</button>
+  </header>
+
+  <!-- explore -->
+  <div class="panel active" id="sp-explore">
+    <div class="explore-hero">
+      <div class="eyebrow">IEU Labs · Matching System · 2025–26</div>
+      <div class="big-title">Find your<br><em>Lab.</em></div>
+      <div class="hero-sub">Rank what you genuinely want. The Deferred Acceptance mechanism guarantees honesty is always your best strategy.</div>
+    </div>
+    <div class="fbar">
+      <button class="fchip active" onclick="filterLabs('all',this)">All Labs</button>
+      <button class="fchip" onclick="filterLabs('consultancy',this)">Consultancy</button>
+      <button class="fchip" onclick="filterLabs('social',this)">Social Impact</button>
+      <button class="fchip" onclick="filterLabs('entrepreneurship',this)">Entrepreneurship</button>
+    </div>
+    <div class="labs-grid" id="labs-grid"></div>
+  </div>
+
+  <!-- apply -->
+  <div class="panel" id="sp-apply">
+    <div class="apply-wrap">
+      <div>
+        <div class="sec-head">Submit Your Ranking</div>
+        <div class="sec-sub">List labs in honest order of preference. The algorithm does the rest.</div>
+        <div class="dcard">
+          <div class="ctitle">Your Profile</div>
+          <div class="csub">Used by labs to compute priority scores.</div>
+          <div class="fgrid">
+            <div class="frow"><label class="flabel">First Name</label><input class="finput" id="f-first" placeholder="Ana" oninput="chkSub()"></div>
+            <div class="frow"><label class="flabel">Last Name</label><input class="finput" id="f-last" placeholder="García" oninput="chkSub()"></div>
+          </div>
+          <div class="fgrid">
+            <div class="frow"><label class="flabel">Year</label>
+              <select class="fsel" id="f-year"><option value="">Select</option><option>1st Year</option><option>2nd Year</option><option>3rd Year</option><option>4th Year</option><option>5th Year</option></select>
+            </div>
+            <div class="frow"><label class="flabel">Program</label>
+              <select class="fsel" id="f-prog"><option value="">Select</option><option>Business Administration</option><option>Economics</option><option>Economics &amp; International Relations (Dual)</option><option>Law + BBA</option><option>International Relations</option><option>Computer Science</option><option>Data &amp; Business Analytics</option><option>Journalism</option><option>Architecture</option><option>Other</option></select>
+            </div>
+          </div>
+          <div class="frow"><label class="flabel">Motivation (optional)</label><input class="finput" id="f-motiv" placeholder="Why do you want to join IEU Labs?" maxlength="200"></div>
+        </div>
+        <div class="dcard">
+          <div class="ctitle">Your Lab Ranking</div>
+          <div class="csub">Rank up to 5 labs. Add from the list →. Remove with ×.</div>
+          <div class="rank-label">Preference Order</div>
+          <div class="rank-rows" id="rank-rows"></div>
+          <button class="big-btn" id="sub-btn" onclick="submitApp()" disabled>Submit Application →</button>
+          <div id="sub-error" style="color:var(--red);font-size:.78rem;margin-top:.5rem;display:none;"></div>
+        </div>
+      </div>
+      <div>
+        <div class="da-box">
+          <div class="da-title">DA Guarantee</div>
+          <div class="da-steps">
+            <div class="da-step"><div class="da-n">1</div><div class="da-txt">All students apply to top choice simultaneously</div></div>
+            <div class="da-step"><div class="da-n">2</div><div class="da-txt">Labs <strong>tentatively hold</strong> top-priority students — not final</div></div>
+            <div class="da-step"><div class="da-n">3</div><div class="da-txt">Rejected students move to next choice; labs reconsider</div></div>
+            <div class="da-step"><div class="da-n">4</div><div class="da-txt">Rounds repeat until no rejections — matching is stable</div></div>
+          </div>
+          <div class="guar">✦ Honesty is always optimal. You can never improve your outcome by misreporting preferences.</div>
+        </div>
+        <div class="dcard">
+          <div class="ctitle">Add to Ranking</div>
+          <div class="csub" style="margin-bottom:.8rem">Tap + to add (max 5)</div>
+          <div class="avail-list" id="avail-list"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- status -->
+  <div class="panel" id="sp-status">
+    <div class="status-wrap">
+      <div class="sec-head">My Status</div>
+      <div class="sec-sub" id="st-sub">Submit your application to track your progress through the matching rounds.</div>
+      <div id="st-poll-note" style="display:none;font-size:.75rem;color:var(--dimmer);margin-bottom:1rem;"><span class="spin"></span>Polling server every 5 seconds…</div>
+      <div class="tl" id="st-tl"></div>
+      <div id="st-result" style="display:none"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ ADMIN ══════════════════════════════════════════════ -->
+<div class="screen" id="sa">
+  <header class="hdr admin">
+    <div class="hlogo">IEU<em>LABS</em><small>Admin</small></div>
+    <nav class="hnav">
+      <button class="htab active" onclick="aTab('dashboard',this)">Dashboard</button>
+      <button class="htab" onclick="aTab('rounds',this)">Rounds</button>
+      <button class="htab" onclick="aTab('results',this)">Results</button>
+    </nav>
+    <button class="back-btn" onclick="goRole()">← Switch Role</button>
+  </header>
+
+  <!-- dashboard -->
+  <div class="panel active" id="ap-dashboard">
+    <div class="dash-wrap">
+      <div class="phase-bar">
+        <div><div class="phase-lbl">Current Phase</div><div class="phase-val" id="ap-phase">Collecting Preferences</div></div>
+        <div class="phase-acts">
+          <button class="abtn primary" id="a-run-btn" onclick="adminRunAll()">▶ Run DA Algorithm</button>
+          <button class="abtn danger" onclick="adminReset()">↺ Reset Session</button>
+        </div>
+      </div>
+      <div class="kpi-row">
+        <div class="kpi"><div class="kpi-val" id="ak-subs">0</div><div class="kpi-lbl">Submissions</div></div>
+        <div class="kpi"><div class="kpi-val" id="ak-rounds">—</div><div class="kpi-lbl">Rounds Run</div></div>
+        <div class="kpi"><div class="kpi-val" id="ak-matched">—</div><div class="kpi-lbl">Matched</div></div>
+        <div class="kpi"><div class="kpi-val" id="ak-first">—</div><div class="kpi-lbl">Got 1st Choice</div></div>
+      </div>
+      <div class="dash-grid">
+        <div class="dash-col">
+          <div class="dash-col-title">Oversubscribed Labs (1st choice demand)</div>
+          <div id="a-over"></div>
+        </div>
+        <div class="dash-col" style="border-right:none">
+          <div class="dash-col-title">Recent Submissions</div>
+          <div id="a-recent" style="display:flex;flex-direction:column;gap:5px;max-height:200px;overflow-y:auto;"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- rounds -->
+  <div class="panel" id="ap-rounds">
+    <div class="rounds-wrap">
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:1rem;margin-bottom:2rem;">
+        <div><div class="sec-head">Algorithm Rounds</div><div class="sec-sub">Round-by-round trace of the Deferred Acceptance process.</div></div>
+        <div class="round-ctrl">
+          <div class="stepper">
+            <button class="step-btn" id="prev-r" onclick="stepR(-1)" disabled>‹</button>
+            <div class="step-disp" id="r-disp">No rounds yet</div>
+            <button class="step-btn" id="next-r" onclick="stepR(1)" disabled>›</button>
+          </div>
+          <div class="status-chip chip-wait" id="algo-chip">Waiting</div>
+        </div>
+      </div>
+      <div class="rounds-grid" id="rounds-grid">
+        <div style="background:var(--dark);padding:2rem;color:var(--dimmer);font-size:.85rem;">No rounds yet. Run the algorithm from the Dashboard.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- results -->
+  <div class="panel" id="ap-results">
+    <div class="results-wrap">
+      <div class="stable-bar" id="stable-bar" style="display:none">
+        <span style="font-size:1.2rem">✦</span>
+        <div><div style="font-family:var(--fd);font-size:1rem;font-weight:700;letter-spacing:.05em">Stable Matching Achieved</div><div id="stable-sub" style="font-size:.79rem;color:var(--dim)"></div></div>
+      </div>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.5rem;flex-wrap:wrap;gap:1rem;">
+        <div class="sec-head">Final Allocation</div>
+        <button class="abtn primary" onclick="publishResults()" id="pub-btn">Publish Results to Students</button>
+      </div>
+      <div id="no-res-msg" style="color:var(--dimmer);font-size:.86rem;padding:2rem 0">No data yet. Run the algorithm first.</div>
+      <div style="overflow-x:auto">
+        <table class="dt" id="res-table" style="display:none">
+          <thead><tr><th>Student</th><th>Program / Year</th><th>1st Choice</th><th>Assigned Lab</th><th>Rank</th><th>Priority</th></tr></thead>
+          <tbody id="res-body"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- LAB OVERLAY -->
+<div class="ov" id="lab-ov" onclick="if(event.target===this)closeOv()">
+  <div class="ov-panel">
+    <button class="ov-close" onclick="closeOv()">✕</button>
+    <div class="ov-type" id="ov-type"></div>
+    <div class="ov-name" id="ov-name"></div>
+    <div class="ov-tag" id="ov-tag"></div>
+    <div class="ov-sec">What you'll do</div><div class="ov-tasks" id="ov-tasks"></div>
+    <div class="ov-sec">Skills</div><div class="skills" id="ov-skills"></div>
+    <div class="ov-sec">Info</div><div id="ov-info" style="font-size:.81rem;color:var(--dim)"></div>
+    <button class="ov-add" id="ov-add" onclick="addFromOv()">+ Add to Ranking</button>
+  </div>
+</div>
+
+<!-- CONGRATS -->
+<div class="cov" id="cov">
+  <div class="cbox">
+    <div class="ci" id="ci">⏳</div>
+    <div class="ctit" id="ctit">Application Submitted!</div>
+    <div class="cname" id="cname"></div>
+    <div class="cll">Your assignment is</div>
+    <div class="clab" id="clab">Pending…</div>
+    <div class="csub" id="csub"></div>
+    <button class="ccls" onclick="document.getElementById('cov').classList.remove('open');sTab('status',document.querySelectorAll('.htab')[2])">View My Status →</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ── CONFIG ─────────────────────────────────────────────────────────────────
+// Change this to your deployed backend URL, e.g. "https://ieulabs-api.onrender.com"
+var API = (function(){
+  var h = window.location.hostname;
+  // if opened as file or localhost frontend, point to local backend
+  if(h==='localhost'||h===''||h==='127.0.0.1') return 'http://localhost:3001';
+  // if frontend is on same origin as backend
+  return window.location.origin;
+})();
+var ADMIN_SECRET_LOCAL = ''; // filled after login
+
+// ── LABS (client-side copy for UI — fetched from server on load) ────────────
+var LABS_DATA = [
+  {id:'ai',name:'AI Lab',type:'consultancy',seats:8,color:'#3dbfb8',tagline:'Experience the corporate world of artificial intelligence.',tasks:'Develop AI strategy reports, evaluate LLM use-cases for clients, prototype automation solutions, present findings to company directors.',skills:['Machine Learning','Prompt Engineering','Data Analysis','Business Strategy','Python'],info:'4–6 hrs/week · Extensive + intensive · 3 ECTS'},
+  {id:'behavior',name:'Behavior Lab',type:'consultancy',seats:10,color:'#4a9eff',tagline:'Make positive change through people.',tasks:'Run behavioral experiments, analyze nudge interventions, write reports for NGOs on how to change behavior at scale.',skills:['Behavioral Economics','Data Collection','Survey Design','Psychology','Presentation'],info:'4–6 hrs/week · Madrid campus · 3 ECTS'},
+  {id:'branding',name:'Branding Lab',type:'consultancy',seats:8,color:'#e05a5a',tagline:'Get your brand across to your audience.',tasks:'Conduct brand audits, develop visual identity proposals, create brand messaging frameworks, pitch to client teams.',skills:['Brand Strategy','Creative Direction','Market Research','Storytelling','Figma'],info:'4–6 hrs/week · Madrid campus · 3 ECTS'},
+  {id:'communication',name:'Communication Lab',type:'consultancy',seats:12,color:'#f0a830',tagline:'Create media content that matters.',tasks:'Create content calendars, write articles, produce short-form video, manage social media campaigns for partners.',skills:['Content Creation','SEO','Video Editing','Social Media','Copywriting'],info:'4–6 hrs/week · Madrid & Segovia · 3 ECTS'},
+  {id:'econdata',name:'Econ Data Lab',type:'consultancy',seats:10,color:'#3dbfb8',tagline:'Dive into the data and make economics relevant.',tasks:'Build economic models, clean large datasets, produce policy briefs, visualize economic indicators for clients.',skills:['Econometrics','Python/R','Data Visualization','Policy Analysis','Excel'],info:'4–6 hrs/week · Madrid & Segovia · 3 ECTS'},
+  {id:'entertainment',name:'Entertainment Lab',type:'consultancy',seats:8,color:'#f0a830',tagline:'Join the revolution across music, film and digital content.',tasks:'Analyze streaming trends, develop content strategies, research audience insights for music labels and studios.',skills:['Media Strategy','Trend Analysis','Market Research','Creative Thinking','Business Dev'],info:'4–6 hrs/week · Madrid campus · 3 ECTS'},
+  {id:'finance',name:'Finance Lab',type:'consultancy',seats:10,color:'#4a9eff',tagline:'Analyze financial markets to optimize investment strategies.',tasks:'Build DCF models, analyze equity markets, write investment memos, present portfolio recommendations.',skills:['Financial Modeling','Valuation','Bloomberg','Excel','Equity Research'],info:'4–6 hrs/week · Madrid & Segovia · 3 ECTS'},
+  {id:'innovation',name:'Innovation Lab',type:'consultancy',seats:8,color:'#e05a5a',tagline:'Unleash creativity through real business growth challenges.',tasks:'Run design sprints, develop product roadmaps, facilitate ideation workshops, prototype new business concepts.',skills:['Design Thinking','Prototyping','Facilitation','Business Model Canvas','Innovation'],info:'4–6 hrs/week · Madrid campus · 3 ECTS'},
+  {id:'legal',name:'Legal Clinic',type:'consultancy',seats:8,color:'#f0c040',tagline:'Offer legal advice and counselling to NGOs and startups.',tasks:'Research legal questions, draft memos, advise NGOs on contracts and compliance, support startups.',skills:['Legal Research','Contract Law','NGO Law','Writing','Client Communication'],info:'4–6 hrs/week · Madrid & Segovia · 3 ECTS'},
+  {id:'marketing',name:'Marketing Lab',type:'consultancy',seats:12,color:'#3dbfb8',tagline:'Build brand strategy and marketing plans for real clients.',tasks:'Conduct focus groups, develop go-to-market strategies, create media plans, present campaign results.',skills:['Marketing Strategy','Consumer Research','Campaign Management','Analytics','Decks'],info:'4–6 hrs/week · Madrid & Segovia · 3 ECTS'},
+  {id:'policy',name:'Policy Lab',type:'consultancy',seats:10,color:'#4a9eff',tagline:'Develop professional projects for public and private organizations.',tasks:'Write policy briefs, analyze legislation, benchmark international approaches, present to government officials.',skills:['Policy Analysis','Research','Report Writing','Public Affairs','Economics'],info:'4–6 hrs/week · Madrid & Segovia · 3 ECTS'},
+  {id:'strategy',name:'Strategy Lab',type:'consultancy',seats:10,color:'#f0a830',tagline:'Connecting businesses with bright new minds.',tasks:'Conduct competitive analysis, build strategic frameworks, develop market entry strategies, present to C-suite.',skills:['Strategy Frameworks','Market Analysis','Consulting','PowerPoint','Exec Presentations'],info:'4–6 hrs/week · Madrid campus · 3 ECTS'},
+  {id:'tech',name:'Tech Lab',type:'consultancy',seats:10,color:'#e05a5a',tagline:'Design innovative solutions for real-life technology challenges.',tasks:'Prototype apps, design system architectures, develop tech feasibility reports, code MVPs.',skills:['Programming','System Design','Tech Consulting','UX/UI Basics','Agile'],info:'4–6 hrs/week · Madrid campus · 3 ECTS'},
+  {id:'socialimpact',name:'Social Impact Lab',type:'social',seats:12,color:'#3dbf80',tagline:'Work in social development consultancy to help people and communities.',tasks:'Develop fundraising strategies, design community outreach programs, support UNICEF and Make-A-Wish.',skills:['Social Innovation','Impact Measurement','NGO Management','Project Management','Comms'],info:'4–6 hrs/week · Madrid & Segovia · 3 ECTS'},
+  {id:'sustainability',name:'Sustainability Lab',type:'social',seats:10,color:'#3dbf80',tagline:'Build a sustainable and regenerative future.',tasks:'Conduct ESG audits, develop sustainability reports, design circular economy proposals, advise on net-zero.',skills:['ESG','Circular Economy','LCA Analysis','Stakeholder Engagement','Climate Policy'],info:'4–6 hrs/week · Madrid campus · 3 ECTS'},
+  {id:'startup',name:'Start-Up Lab',type:'entrepreneurship',seats:15,color:'#f0c040',tagline:'Bring your business ideas to life.',tasks:'Develop business model canvas, conduct customer discovery, build financial projections, pitch to angel investors.',skills:['Entrepreneurship','Pitch Deck','Business Modeling','Customer Dev','Fundraising'],info:'4–6 hrs/week · Madrid & Segovia · Pitch to investors · 3 ECTS'},
+];
+
+var AVATARS=[
+  {bg:'#1a3a2a',tc:'#3dbf80'},{bg:'#1a2a3a',tc:'#4a9eff'},{bg:'#3a1a1a',tc:'#e05a5a'},
+  {bg:'#2a2a0a',tc:'#f0c040'},{bg:'#1a2a3a',tc:'#3dbfb8'},{bg:'#2a1a2a',tc:'#c09aff'},
+  {bg:'#2a1a0a',tc:'#f0a830'},{bg:'#1a3a3a',tc:'#50d4cc'},
+];
+
+// ── STATE ───────────────────────────────────────────────────────────────────
+var userRanking=[], openLabId=null, myName=null;
+var adminRounds=[], adminResults=[], roundViewIdx=0;
+var pollTimer=null, resultsPublished=false;
+
+function getL(id){return LABS_DATA.find(function(l){return l.id===id;})||null;}
+function toast(m){var t=document.getElementById('toast');t.textContent=m;t.classList.add('show');setTimeout(function(){t.classList.remove('show');},3000);}
+function rankWord(r){return(['1st','2nd','3rd','4th','5th'][r-1]||r+'th');}
+
+// ── NAVIGATION ──────────────────────────────────────────────────────────────
+function goRole(){
+  clearInterval(pollTimer);
+  ['sr','ss','sa'].forEach(function(id){document.getElementById(id).classList.remove('active');});
+  document.getElementById('sr').classList.add('active');
+}
+function enterStudent(){
+  ['sr','ss','sa'].forEach(function(id){document.getElementById(id).classList.remove('active');});
+  document.getElementById('ss').classList.add('active');
+  renderLabsGrid('all');renderRankRows();renderAvailList();
+}
+function showAdminLogin(){
+  var box=document.getElementById('admin-login-box');
+  box.style.display=box.style.display==='none'?'block':'none';
+  if(box.style.display==='block')document.getElementById('admin-pw').focus();
+}
+function tryAdminLogin(){
+  var pw=document.getElementById('admin-pw').value.trim();
+  if(!pw){toast('Enter admin password');return;}
+  ADMIN_SECRET_LOCAL=pw;
+  // verify against server
+  apiFetch('/api/admin/submissions',{method:'GET'}).then(function(d){
+    if(d&&!d.error){enterAdmin();}
+    else{toast('Wrong password');ADMIN_SECRET_LOCAL='';}
+  });
+}
+function enterAdmin(){
+  document.getElementById('admin-login-box').style.display='none';
+  ['sr','ss','sa'].forEach(function(id){document.getElementById(id).classList.remove('active');});
+  document.getElementById('sa').classList.add('active');
+  startAdminPoll();
+}
+function sTab(id,btn){
+  document.querySelectorAll('#ss .htab').forEach(function(t){t.classList.remove('active');});
+  document.querySelectorAll('#ss .panel').forEach(function(p){p.classList.remove('active');});
+  if(btn)btn.classList.add('active');
+  document.getElementById('sp-'+id).classList.add('active');
+  if(id==='status')refreshStatus();
+}
+function aTab(id,btn){
+  document.querySelectorAll('#sa .htab').forEach(function(t){t.classList.remove('active');});
+  document.querySelectorAll('#sa .panel').forEach(function(p){p.classList.remove('active');});
+  if(btn)btn.classList.add('active');
+  document.getElementById('ap-'+id).classList.add('active');
+  if(id==='rounds')renderRoundsPanel();
+  if(id==='results')renderResultsTable();
+}
+
+// ── API HELPER ──────────────────────────────────────────────────────────────
+function apiFetch(path, opts){
+  opts=opts||{};
+  opts.headers=opts.headers||{};
+  opts.headers['Content-Type']='application/json';
+  if(ADMIN_SECRET_LOCAL)opts.headers['x-admin-secret']=ADMIN_SECRET_LOCAL;
+  return fetch(API+path,opts)
+    .then(function(r){return r.json();})
+    .catch(function(e){console.error(e);return{error:'Network error'};});
+}
+
+// ── LABS GRID ───────────────────────────────────────────────────────────────
+function renderLabsGrid(filter){
+  var g=document.getElementById('labs-grid');
+  var list=filter==='all'?LABS_DATA:LABS_DATA.filter(function(l){return l.type===filter;});
+  g.innerHTML=list.map(function(lab){
+    return '<div class="lcard" onclick="openLab(\''+lab.id+'\')">'+
+      '<div class="lcard-acc" style="background:'+lab.color+'"></div>'+
+      '<div class="lcard-type">'+lab.type+'</div>'+
+      '<div class="lcard-name">'+lab.name+'</div>'+
+      '<div class="lcard-desc">'+lab.tagline+'</div>'+
+      '<div class="lcard-foot"><div class="lcard-seats">'+lab.seats+' seats</div><div class="lcard-cta">Details →</div></div>'+
+    '</div>';
+  }).join('');
+}
+function filterLabs(type,btn){
+  document.querySelectorAll('.fchip').forEach(function(c){c.classList.remove('active');});
+  btn.classList.add('active');renderLabsGrid(type);
+}
+function openLab(id){
+  var lab=getL(id);if(!lab)return;openLabId=id;
+  var tc={consultancy:'#4a9eff',social:'#3dbf80',entrepreneurship:'#f0c040'};
+  document.getElementById('ov-type').textContent=lab.type.toUpperCase();
+  document.getElementById('ov-type').style.color=tc[lab.type]||'#4a9eff';
+  document.getElementById('ov-name').textContent=lab.name;
+  document.getElementById('ov-tag').textContent=lab.tagline;
+  document.getElementById('ov-tasks').textContent=lab.tasks;
+  document.getElementById('ov-info').textContent=lab.info;
+  document.getElementById('ov-skills').innerHTML=lab.skills.map(function(s){return'<span class="skill">'+s+'</span>';}).join('');
+  var btn=document.getElementById('ov-add');
+  var ranked=userRanking.indexOf(id)!==-1;
+  if(ranked){btn.textContent='✓ In your ranking';btn.disabled=true;}
+  else if(userRanking.length>=5){btn.textContent='Ranking full (max 5)';btn.disabled=true;}
+  else{btn.textContent='+ Add to Ranking';btn.disabled=false;}
+  document.getElementById('lab-ov').classList.add('open');
+}
+function closeOv(){document.getElementById('lab-ov').classList.remove('open');openLabId=null;}
+function addFromOv(){
+  if(!openLabId)return;
+  var lab=getL(openLabId);if(!lab)return;
+  if(userRanking.indexOf(openLabId)!==-1||userRanking.length>=5)return;
+  addRank(openLabId);toast('Added '+lab.name+' to your ranking!');closeOv();
+}
+
+// ── RANKING ──────────────────────────────────────────────────────────────────
+function addRank(id){
+  if(userRanking.indexOf(id)!==-1||userRanking.length>=5)return;
+  userRanking.push(id);renderRankRows();renderAvailList();chkSub();
+}
+function rmRank(id){
+  userRanking=userRanking.filter(function(x){return x!==id;});
+  renderRankRows();renderAvailList();chkSub();
+}
+function renderRankRows(){
+  var c=document.getElementById('rank-rows');
+  c.innerHTML='';
+  var ph=['Add your 1st choice below','2nd choice','3rd choice','4th choice (optional)','5th choice (optional)'];
+  for(var i=0;i<5;i++){
+    var div=document.createElement('div');
+    div.className='rrow'+(userRanking[i]?' filled':'');
+    var n=document.createElement('div');n.className='rnum';n.textContent=i+1;div.appendChild(n);
+    if(userRanking[i]){
+      var lab=getL(userRanking[i]);
+      var lbl=document.createElement('div');lbl.className='rlab';lbl.textContent=lab?lab.name:userRanking[i];
+      var rm=document.createElement('button');rm.className='rrm';rm.textContent='×';
+      (function(id){rm.onclick=function(){rmRank(id);};})(userRanking[i]);
+      div.appendChild(lbl);div.appendChild(rm);
+    } else {
+      var p=document.createElement('div');p.className='rph';p.textContent=ph[i];div.appendChild(p);
+    }
+    c.appendChild(div);
+  }
+}
+function renderAvailList(){
+  var c=document.getElementById('avail-list');
+  c.innerHTML=LABS_DATA.map(function(lab){
+    var ranked=userRanking.indexOf(lab.id)!==-1;
+    return'<div class="aitem'+(ranked?' ranked':'')+'">'+
+      '<span>'+lab.name+'</span>'+
+      (ranked?'<span style="color:var(--green);font-size:.75rem">✓</span>':
+               '<button class="achip" onclick="addRank(\''+lab.id+'\')">+ Add</button>')+
+    '</div>';
+  }).join('');
+}
+function chkSub(){
+  var f=document.getElementById('f-first').value.trim();
+  var l=document.getElementById('f-last').value.trim();
+  document.getElementById('sub-btn').disabled=!(f&&l&&userRanking.length>=1);
+}
+
+// ── SUBMIT (student → backend) ──────────────────────────────────────────────
+function submitApp(){
+  var fn=document.getElementById('f-first').value.trim();
+  var ln=document.getElementById('f-last').value.trim();
+  var yr=document.getElementById('f-year').value||'1st Year';
+  var pr=document.getElementById('f-prog').value||'Other';
+  if(!fn||!ln||userRanking.length<1)return;
+  var name=fn+' '+ln;
+  document.getElementById('sub-btn').disabled=true;
+  document.getElementById('sub-btn').textContent='Submitting…';
+  var errEl=document.getElementById('sub-error');errEl.style.display='none';
+
+  apiFetch('/api/submit',{
+    method:'POST',
+    body:JSON.stringify({name:name,year:yr,program:pr,ranking:userRanking.slice()}),
+  }).then(function(d){
+    if(d.error){
+      errEl.textContent=d.error==='Already submitted'?'You already submitted! Check My Status.':d.error;
+      errEl.style.display='block';
+      document.getElementById('sub-btn').disabled=false;
+      document.getElementById('sub-btn').textContent='Submit Application →';
+      return;
+    }
+    myName=name;
+    // clear form
+    document.getElementById('f-first').value='';document.getElementById('f-last').value='';
+    document.getElementById('f-year').value='';document.getElementById('f-prog').value='';
+    document.getElementById('f-motiv').value='';
+    userRanking=[];renderRankRows();renderAvailList();chkSub();
+    document.getElementById('sub-btn').textContent='Submit Application →';
+
+    // show pending congrats
+    showCongrats(name,null,null,true);
+    // start polling for result
+    startStudentPoll(name);
+  });
+}
+
+// ── STUDENT POLLING ─────────────────────────────────────────────────────────
+function startStudentPoll(name){
+  clearInterval(pollTimer);
+  document.getElementById('st-poll-note').style.display='block';
+  pollTimer=setInterval(function(){pollResult(name);},5000);
+  pollResult(name);
+}
+function pollResult(name){
+  apiFetch('/api/result/'+encodeURIComponent(name)).then(function(d){
+    if(d.error)return;
+    renderStatusFromResult(d);
+    if(d.phase==='finished'&&d.assignedLab&&resultsPublished){
+      clearInterval(pollTimer);
+      document.getElementById('st-poll-note').style.display='none';
+      showCongrats(d.name,d.labName,d.assignedRank,false);
+    }
+  });
+}
+function refreshStatus(){
+  if(!myName){
+    document.getElementById('st-sub').textContent='Submit your application to track your progress.';
+    document.getElementById('st-tl').innerHTML='<div style="color:var(--dimmer);font-size:.85rem;padding:1.5rem 0">No application yet.</div>';
+    return;
+  }
+  pollResult(myName);
+}
+function renderStatusFromResult(d){
+  document.getElementById('st-sub').textContent='Tracking: '+d.name;
+  var tl=document.getElementById('st-tl');
+  tl.innerHTML=(d.timeline||[]).map(function(ev){
+    var dot=ev.type==='final'?'done':ev.type==='held'?'act':'';
+    return'<div class="tl-item">'+
+      '<div class="tl-dot '+dot+'"></div>'+
+      '<div>'+
+        '<div class="tl-lbl">'+ev.text+'</div>'+
+        '<div class="tl-sub">'+ev.sub+'</div>'+
+        (ev.held?'<div class="held-badge">Tentatively held by '+ev.held+'</div>':'')+
+      '</div></div>';
+  }).join('');
+
+  var resEl=document.getElementById('st-result');
+  if(d.phase==='finished'&&d.assignedLab&&resultsPublished){
+    resEl.style.display='block';
+    resEl.innerHTML='<div class="result-card">'+
+      '<div class="result-label">Final Assignment</div>'+
+      '<div class="result-lab">'+d.labName+'</div>'+
+      '<div class="result-rank">'+rankWord(d.assignedRank)+' choice · Stable matching confirmed</div>'+
+    '</div>';
+  } else {
+    resEl.style.display='none';
+  }
+}
+
+// ── CONGRATS MODAL ───────────────────────────────────────────────────────────
+function showCongrats(name,labName,rank,pending){
+  document.getElementById('ci').textContent=pending?'⏳':'🎉';
+  document.getElementById('ctit').textContent=pending?'Application Submitted!':'Congratulations!';
+  document.getElementById('cname').textContent=name;
+  document.getElementById('clab').textContent=pending?'Pending…':(labName||'—');
+  document.getElementById('csub').textContent=pending
+    ?'Your preferences have been recorded. The professor will run the DA algorithm once everyone has submitted. Check My Status to track progress.'
+    :'This was your '+rankWord(rank)+' choice. The Deferred Acceptance mechanism produced a stable, fair matching. No student has justified envy over your assignment.';
+  document.getElementById('cov').classList.add('open');
+}
+
+// ── ADMIN POLLING ────────────────────────────────────────────────────────────
+var adminPollTimer=null;
+function startAdminPoll(){
+  clearInterval(adminPollTimer);
+  refreshAdminAll();
+  adminPollTimer=setInterval(refreshAdminAll,5000);
+}
+function refreshAdminAll(){
+  apiFetch('/api/admin/submissions').then(function(subs){
+    if(!subs||subs.error)return;
+    updateAdminDash(subs);
+  });
+  apiFetch('/api/admin/rounds').then(function(r){
+    if(!r||r.error)return;
+    adminRounds=r;
+  });
+  apiFetch('/api/status').then(function(s){
+    if(!s||s.error)return;
+    var phaseNames={collecting:'Collecting Preferences',running:'Running Algorithm',finished:'Stable Matching Achieved'};
+    document.getElementById('ap-phase').textContent=phaseNames[s.phase]||s.phase;
+    document.getElementById('ak-rounds').textContent=s.roundCount||'—';
+    if(s.phase==='finished'){
+      document.getElementById('a-run-btn').textContent='✓ Algorithm Complete';
+      document.getElementById('a-run-btn').disabled=true;
+      document.getElementById('algo-chip').className='status-chip chip-done';
+      document.getElementById('algo-chip').textContent='Stable';
+    }
+  });
+}
+function updateAdminDash(subs){
+  document.getElementById('ak-subs').textContent=subs.length;
+  // demand map
+  var demand={};LABS_DATA.forEach(function(l){demand[l.id]=0;});
+  subs.forEach(function(s){if(s.ranking&&s.ranking[0])demand[s.ranking[0]]=(demand[s.ranking[0]]||0)+1;});
+  var over=LABS_DATA.filter(function(l){return demand[l.id]>l.seats;});
+  document.getElementById('a-over').innerHTML=over.length?over.map(function(l){
+    return'<div style="display:flex;justify-content:space-between;align-items:center;font-size:.79rem;padding:5px 10px;background:var(--mid);margin-bottom:4px;">'+
+      '<span>'+l.name+'</span><span style="color:var(--red);font-weight:700">'+demand[l.id]+'/'+l.seats+'</span></div>';
+  }).join(''):'<div style="color:var(--dimmer);font-size:.8rem">None yet.</div>';
+  // recent
+  document.getElementById('a-recent').innerHTML=subs.slice(-5).reverse().map(function(s){
+    var c=AVATARS[s.colorIdx%AVATARS.length];
+    return'<div style="display:flex;align-items:center;gap:8px;font-size:.79rem;">'+
+      '<div class="av" style="background:'+c.bg+';color:'+c.tc+';width:24px;height:24px;font-size:.58rem">'+s.initials+'</div>'+
+      '<span>'+s.name+'</span><span style="color:var(--dimmer);margin-left:auto">'+s.year+'</span></div>';
+  }).join('');
+}
+
+// ── ADMIN ACTIONS ────────────────────────────────────────────────────────────
+function adminRunAll(){
+  document.getElementById('a-run-btn').disabled=true;
+  document.getElementById('a-run-btn').innerHTML='<span class="spin"></span>Running…';
+  apiFetch('/api/admin/run',{method:'POST'}).then(function(d){
+    if(d.error){toast('Error: '+d.error);document.getElementById('a-run-btn').disabled=false;document.getElementById('a-run-btn').textContent='▶ Run DA Algorithm';return;}
+    adminRounds=[];
+    apiFetch('/api/admin/rounds').then(function(r){
+      if(r&&!r.error)adminRounds=r;
+      renderRoundsPanel();
+    });
+    apiFetch('/api/admin/results').then(function(r){
+      if(!r||r.error)return;
+      adminResults=r.submissions||[];
+      var matched=adminResults.filter(function(s){return s.assignedLab;}).length;
+      var got1=adminResults.filter(function(s){return s.assignedRank===1;}).length;
+      document.getElementById('ak-matched').textContent=matched;
+      document.getElementById('ak-first').textContent=matched?Math.round(got1/matched*100)+'%':'—';
+      document.getElementById('ak-rounds').textContent=d.rounds;
+      document.getElementById('stable-bar').style.display='flex';
+      document.getElementById('stable-sub').textContent='Stable matching in '+d.rounds+' round(s). '+matched+' students matched.';
+      renderResultsTable();
+    });
+    document.getElementById('a-run-btn').textContent='✓ Algorithm Complete';
+    document.getElementById('ap-phase').textContent='Stable Matching Achieved';
+    document.getElementById('algo-chip').className='status-chip chip-done';
+    document.getElementById('algo-chip').textContent='Stable';
+    toast('DA complete! '+d.rounds+' rounds, '+d.matched+' students matched.');
+  });
+}
+function adminReset(){
+  if(!confirm('Reset all submissions and results?'))return;
+  apiFetch('/api/admin/reset',{method:'POST'}).then(function(d){
+    if(d.ok){
+      adminRounds=[];adminResults=[];resultsPublished=false;roundViewIdx=0;
+      document.getElementById('a-run-btn').textContent='▶ Run DA Algorithm';
+      document.getElementById('a-run-btn').disabled=false;
+      document.getElementById('ap-phase').textContent='Collecting Preferences';
+      document.getElementById('ak-subs').textContent='0';
+      document.getElementById('ak-rounds').textContent='—';
+      document.getElementById('ak-matched').textContent='—';
+      document.getElementById('ak-first').textContent='—';
+      document.getElementById('stable-bar').style.display='none';
+      document.getElementById('algo-chip').className='status-chip chip-wait';
+      document.getElementById('algo-chip').textContent='Waiting';
+      document.getElementById('r-disp').textContent='No rounds yet';
+      document.getElementById('prev-r').disabled=true;
+      document.getElementById('next-r').disabled=true;
+      renderRoundsPanel();renderResultsTable();
+      refreshAdminAll();
+      toast('Session reset.');
+    }
+  });
+}
+function publishResults(){
+  resultsPublished=true;
+  toast('Results published! Students can now see their assignments.');
+  document.getElementById('pub-btn').textContent='✓ Published';
+  document.getElementById('pub-btn').disabled=true;
+}
+
+// ── ROUNDS PANEL ─────────────────────────────────────────────────────────────
+function renderRoundsPanel(){
+  var g=document.getElementById('rounds-grid');
+  if(!adminRounds.length){
+    g.innerHTML='<div style="background:var(--dark);padding:2rem;color:var(--dimmer);font-size:.85rem;">No rounds yet. Run the algorithm from the Dashboard.</div>';
+    return;
+  }
+  var n=adminRounds.length;
+  document.getElementById('r-disp').textContent='Round '+(roundViewIdx+1)+' of '+n;
+  document.getElementById('prev-r').disabled=roundViewIdx<=0;
+  document.getElementById('next-r').disabled=roundViewIdx>=n-1;
+
+  g.innerHTML=adminRounds.map(function(r,i){
+    var isCur=i===roundViewIdx;
+    var evs='';
+    (r.proposals||[]).forEach(function(p){evs+='<div class="rc-ev ev-p">'+p.student+' → '+p.lab+'</div>';});
+    (r.rejections||[]).forEach(function(p){evs+='<div class="rc-ev ev-r">✗ '+p.student+' from '+p.lab+'</div>';});
+    (r.holds||[]).slice(0,4).forEach(function(h){evs+='<div class="rc-ev ev-h">◎ '+h.student+' held by '+h.lab+'</div>';});
+    var badges='<span class="rbadge rb-p">'+(r.proposals||[]).length+' proposals</span>';
+    if((r.rejections||[]).length)badges+=' <span class="rbadge rb-r">'+(r.rejections||[]).length+' rejected</span>';
+    if(!(r.proposals||[]).length)badges='<span class="rbadge rb-s">Stable</span>';
+    return'<div class="rcol'+(isCur?' cur':'')+'">'+
+      '<div class="rc-hdr"><div class="rc-num">R'+(i+1)+'</div><div>'+badges+'</div></div>'+
+      '<div class="rc-stat">'+(r.proposals||[]).length+' proposals · '+(r.rejections||[]).length+' rej · '+(r.holds||[]).length+' holds</div>'+
+      ((r.oversubscribed||[]).length?'<div class="rc-stat" style="color:var(--red)">Oversubscribed: '+(r.oversubscribed||[]).join(', ')+'</div>':'')+
+      '<div class="rc-evs">'+evs+'</div></div>';
+  }).join('');
+}
+function stepR(dir){
+  roundViewIdx=Math.max(0,Math.min(adminRounds.length-1,roundViewIdx+dir));
+  document.getElementById('r-disp').textContent='Round '+(roundViewIdx+1)+' of '+adminRounds.length;
+  document.getElementById('prev-r').disabled=roundViewIdx<=0;
+  document.getElementById('next-r').disabled=roundViewIdx>=adminRounds.length-1;
+  renderRoundsPanel();
+}
+
+// ── RESULTS TABLE ─────────────────────────────────────────────────────────────
+function renderResultsTable(){
+  var tbody=document.getElementById('res-body');
+  var table=document.getElementById('res-table');
+  var noMsg=document.getElementById('no-res-msg');
+  if(!adminResults.length){table.style.display='none';noMsg.style.display='block';return;}
+  noMsg.style.display='none';table.style.display='table';
+  function rpCls(r){return r===1?'rp1':r===2?'rp2':r===3?'rp3':'rpX';}
+  function rpLbl(r){return r===1?'1st choice':r===2?'2nd choice':r===3?'3rd choice':r?rankWord(r)+' choice':'—';}
+  tbody.innerHTML=adminResults.map(function(s){
+    var c=AVATARS[s.colorIdx%AVATARS.length];
+    var top=s.ranking&&s.ranking[0]?getL(s.ranking[0]):null;
+    return'<tr><td><div class="si"><div class="av" style="background:'+c.bg+';color:'+c.tc+'">'+s.initials+'</div><span style="font-weight:500">'+s.name+'</span></div></td>'+
+      '<td style="color:var(--dimmer);font-size:.77rem">'+(s.program||'—')+'<br>'+(s.year||'')+'</td>'+
+      '<td style="color:var(--dimmer);font-size:.8rem">'+(top?top.name:'—')+'</td>'+
+      '<td style="font-weight:600">'+(s.labName||'—')+'</td>'+
+      '<td>'+(s.assignedRank?'<span class="rpill '+rpCls(s.assignedRank)+'">'+rpLbl(s.assignedRank)+'</span>':'<span style="color:var(--dimmer)">—</span>')+'</td>'+
+      '<td><div class="pbar-w"><span style="font-family:var(--fd);font-size:.88rem;font-weight:700">'+s.priority+'</span><div class="pbar"><div class="pfill" style="width:'+Math.min(100,s.priority)+'%"></div></div></div></td></tr>';
+  }).join('');
+}
+
+// ── SERVER STATUS CHECK ────────────────────────────────────────────────────
+function checkServerStatus(){
+  var el=document.getElementById('server-status');
+  el.innerHTML='<span class="spin"></span>Checking backend…';
+  fetch(API+'/api/status').then(function(r){return r.json();}).then(function(d){
+    el.textContent='✦ Backend connected · Phase: '+(d.phase||'—')+' · Submissions: '+(d.submissionCount||0);
+  }).catch(function(){
+    el.textContent='⚠ Backend offline — start the Express server on port 3001';
+    el.style.color='var(--red)';
+  });
+}
+checkServerStatus();
+
+// ── INIT ──────────────────────────────────────────────────────────────────
+renderLabsGrid('all');renderRankRows();renderAvailList();
+</script>
+</body>
+</html>
