@@ -308,7 +308,8 @@ body{font-family:var(--fb);background:var(--black);color:var(--white);min-height
 .ccls{padding:11px 30px;background:var(--teal);color:var(--black);border:none;font-family:var(--fd);font-size:.88rem;font-weight:900;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;}
 
 /* ── PRIORITY PANEL ── */
-.prio-panel{border:1px solid var(--line);background:var(--dark);overflow:hidden;}
+.prio-panel{border:1px solid var(--line);background:var(--dark);}
+#prio-list{overflow-y:auto;max-height:60vh;}
 .prio-panel-hdr{padding:1.1rem 1.75rem;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:1rem;background:rgba(240,168,48,.03);}
 .prio-panel-title{font-family:var(--fd);font-size:.62rem;font-weight:700;letter-spacing:.22em;text-transform:uppercase;color:var(--amber);margin-bottom:.2rem;}
 .prio-panel-sub{font-size:.78rem;color:var(--dim);}
@@ -673,6 +674,7 @@ var userRanking=[], openLabId=null, myName=null;
 var adminRounds=[], adminResults=[], adminSubs=[], roundViewIdx=0;
 var pollTimer=null, resultsPublished=false;
 var serverPhase='collecting', serverRoundCount=0;
+var localScores={}; // admin priority edits — persists across poll re-renders
 
 function getL(id){return LABS_DATA.find(function(l){return l.id===id;})||null;}
 function toast(m){var t=document.getElementById('toast');t.textContent=m;t.classList.add('show');setTimeout(function(){t.classList.remove('show');},3000);}
@@ -1128,23 +1130,31 @@ function renderPriorityPanel(subs){
   var locked=serverPhase!=='collecting';
 
   if(locked){
-    list.innerHTML='<div style="padding:1.25rem 1.75rem;font-size:.8rem;color:var(--dim)">Priorities were confirmed. Scores are locked.</div>';
+    list.innerHTML='<div style="padding:1.25rem 1.75rem;font-size:.8rem;color:var(--dim)">Priorities confirmed — scores are locked.</div>';
     confirmBtn.disabled=true;confirmBtn.textContent='✓ Priorities Confirmed';
-    randBtn.disabled=true;
-    footNote.innerHTML='<span class="prio-done-badge">✓ Locked in</span>';
+    if(randBtn)randBtn.disabled=true;
+    if(footNote)footNote.innerHTML='<span class="prio-done-badge">✓ Locked in</span>';
     return;
   }
-
   if(!subs.length){
     list.innerHTML='<div style="padding:2rem;color:var(--dimmer);font-size:.85rem;">No submissions yet.</div>';
     confirmBtn.disabled=true;
     return;
   }
 
-  confirmBtn.disabled=false;randBtn.disabled=false;
+  // Seed localScores for any student not yet edited (never overwrite existing edits)
+  subs.forEach(function(s){
+    if(localScores[s.id]===undefined) localScores[s.id]=s.priority||50;
+  });
+
+  confirmBtn.disabled=false;if(randBtn)randBtn.disabled=false;
+
   list.innerHTML=subs.map(function(s){
     var c=AVATARS[s.colorIdx%AVATARS.length];
-    var motiv=s.motivation?('<div class="prio-motiv">'+s.motivation+'</div>'):('<div class="prio-motiv prio-no-motiv">No motivation letter provided.</div>');
+    var score=localScores[s.id]!==undefined?localScores[s.id]:(s.priority||50);
+    var motiv=s.motivation
+      ?'<div class="prio-motiv">'+s.motivation+'</div>'
+      :'<div class="prio-motiv prio-no-motiv">No motivation letter provided.</div>';
     var rankPreview=(s.ranking||[]).slice(0,3).map(function(id){var l=getL(id);return l?l.name:id;}).join(', ');
     return'<div class="prio-student">'+
       '<div class="av" style="background:'+c.bg+';color:'+c.tc+';flex-shrink:0">'+s.initials+'</div>'+
@@ -1158,7 +1168,10 @@ function renderPriorityPanel(subs){
         '<div class="prio-score-lbl">Score</div>'+
         '<div class="prio-score-row">'+
           '<button class="prio-score-btn" onclick="adjustPrio(this,-1)" tabindex="-1">−</button>'+
-          '<input class="prio-score-input" type="text" inputmode="numeric" maxlength="3" value="'+(s.priority||50)+'" data-id="'+s.id+'" onblur="clampPrioInput(this)">'+
+          '<input class="prio-score-input" type="text" inputmode="numeric" maxlength="3"'+
+            ' value="'+score+'" data-id="'+s.id+'"'+
+            ' oninput="localScores[this.dataset.id]=parseInt(this.value)||1"'+
+            ' onblur="clampPrioInput(this)">'+
           '<button class="prio-score-btn" onclick="adjustPrio(this,1)" tabindex="-1">+</button>'+
         '</div>'+
         '<div style="font-size:.6rem;color:var(--dimmer)">1 – 100</div>'+
@@ -1171,22 +1184,24 @@ function clampPrioInput(inp){
   if(isNaN(v)||v<1)v=1;
   if(v>100)v=100;
   inp.value=v;
+  localScores[inp.dataset.id]=v;
 }
 function adjustPrio(btn,delta){
   var inp=btn.parentNode.querySelector('.prio-score-input');
-  var v=parseInt(inp.value)||50;
-  v=Math.max(1,Math.min(100,v+delta));
+  var v=Math.max(1,Math.min(100,(parseInt(inp.value)||50)+delta));
   inp.value=v;
+  localScores[inp.dataset.id]=v;
   inp.classList.remove('prio-score-flash');
   void inp.offsetWidth;
   inp.classList.add('prio-score-flash');
 }
 function randomizePriorities(){
   var inputs=Array.prototype.slice.call(document.querySelectorAll('.prio-score-input'));
-  // shuffle order so the cascade looks organic
   inputs.forEach(function(inp,i){
     setTimeout(function(){
-      inp.value=Math.floor(Math.random()*100)+1;
+      var v=Math.floor(Math.random()*100)+1;
+      inp.value=v;
+      localScores[inp.dataset.id]=v;
       inp.classList.remove('prio-score-flash');
       void inp.offsetWidth;
       inp.classList.add('prio-score-flash');
@@ -1256,7 +1271,7 @@ function adminReset(){
   apiFetch('/api/admin/reset',{method:'POST'}).then(function(d){
     if(d.ok){
       adminRounds=[];adminResults=[];adminSubs=[];resultsPublished=false;roundViewIdx=0;
-      serverPhase='collecting';serverRoundCount=0;
+      serverPhase='collecting';serverRoundCount=0;localScores={};
       document.getElementById('ak-subs').textContent='0';
       document.getElementById('ak-matched').textContent='—';
       document.getElementById('ak-first').textContent='—';
