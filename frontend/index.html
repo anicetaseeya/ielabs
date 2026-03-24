@@ -183,21 +183,80 @@ body{font-family:var(--fb);background:var(--black);color:var(--white);min-height
 .chip-wait{border-color:var(--line);color:var(--dimmer);}
 .chip-run{border-color:var(--amber);color:var(--amber);background:var(--amber-bg);}
 .chip-done{border-color:var(--green);color:var(--green);background:var(--green-bg);}
-.rounds-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:1px;background:var(--line2);border:1px solid var(--line2);}
-.rcol{background:var(--dark);padding:1.5rem;border-right:1px solid var(--line2);border-bottom:1px solid var(--line2);}
-.rcol.cur{background:rgba(240,168,48,.04);outline:1px solid var(--amber);}
-.rc-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:.9rem;}
-.rc-num{font-family:var(--fd);font-size:1.6rem;font-weight:900;color:var(--amber);}
+.rounds-grid{display:flex;flex-direction:column;gap:2.5rem;}
 .rbadge{font-size:.63rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;padding:2px 9px;border:1px solid;}
 .rb-p{border-color:rgba(74,158,255,.5);color:var(--blue);background:var(--blue-bg);}
 .rb-r{border-color:rgba(224,90,90,.5);color:var(--red);background:var(--red-bg);}
 .rb-s{border-color:rgba(61,191,128,.5);color:var(--green);background:var(--green-bg);}
-.rc-stat{font-size:.77rem;color:var(--dim);margin-bottom:5px;}
-.rc-evs{display:flex;flex-direction:column;gap:3px;margin-top:9px;max-height:130px;overflow-y:auto;}
-.rc-ev{font-size:.73rem;padding:3px 8px;border-left:2px solid;}
-.ev-p{border-color:var(--blue);color:var(--dim);}
-.ev-r{border-color:var(--red);color:var(--dim);}
-.ev-h{border-color:var(--green);color:var(--dim);}
+/* Round block — vertical full-width */
+.round-block{border:1px solid var(--line);background:var(--dark);overflow:hidden;}
+.round-block-current{outline:2px solid var(--amber);outline-offset:-1px;}
+.round-block-hdr{display:flex;align-items:center;justify-content:space-between;padding:1.25rem 1.75rem;border-bottom:2px solid rgba(240,168,48,.2);}
+.round-block-num{font-family:var(--fd);font-size:2rem;font-weight:900;color:var(--amber);letter-spacing:.02em;}
+.round-section{padding:1.1rem 1.75rem;border-bottom:1px solid var(--line2);}
+.round-section:last-child{border-bottom:none;}
+.round-section-lbl{font-size:.6rem;font-weight:700;letter-spacing:.22em;text-transform:uppercase;color:var(--dimmer);margin-bottom:.75rem;}
+.round-section-lbl-end{color:rgba(240,168,48,.65);}
+.round-section-end{background:rgba(240,168,48,.025);}
+.rs-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;}
+.rs-key{font-size:.79rem;color:var(--dim);}
+.rs-val{font-family:var(--fd);font-size:1.1rem;font-weight:900;}
+.rs-val-blue{color:var(--blue);}
+.rs-val-red{color:var(--red);}
+.rs-val-amber{color:var(--amber);}
+.rs-val-green{color:var(--green);}
+.round-evs{display:flex;flex-direction:column;gap:3px;max-height:200px;overflow-y:auto;margin-top:6px;}
+.round-ev{display:flex;align-items:center;gap:10px;font-size:.78rem;padding:5px 10px;background:var(--mid);}
+.ev-student{color:var(--white);font-weight:500;min-width:140px;}
+.ev-arrow{color:var(--dimmer);flex-shrink:0;font-size:.75rem;}
+.ev-lab{color:var(--dim);}
+.ev-proposal{border-left:2px solid var(--blue);}
+.ev-rejection{border-left:2px solid var(--red);}
+.ev-rejection .ev-student{color:var(--red);}
+.ev-rejection .ev-arrow{color:var(--red);}
+.lab-state-grid{display:flex;flex-direction:column;gap:5px;margin-top:8px;}
+.lab-state-row{display:flex;gap:12px;padding:9px 12px;background:var(--mid);align-items:flex-start;}
+.lab-state-name{font-size:.75rem;font-weight:700;color:var(--white);min-width:150px;flex-shrink:0;padding-top:2px;}
+.lab-state-students{display:flex;flex-wrap:wrap;gap:4px;}
+.lab-student-chip{font-size:.68rem;padding:2px 9px;background:var(--green-bg);border:1px solid rgba(61,191,128,.25);color:var(--green);}
+.lab-student-new{background:rgba(61,191,128,.2);border-color:rgba(61,191,128,.5);}
+.rs-names{display:flex;flex-wrap:wrap;gap:4px;margin-top:6px;}
+.rs-name{font-size:.7rem;padding:2px 9px;background:var(--mid);border:1px solid var(--line2);color:var(--dim);}
+.rs-name-amber{background:var(--amber-bg);border-color:rgba(240,168,48,.25);color:var(--amber);}
+.rs-note{font-size:.79rem;padding:9px 12px;border-left:2px solid var(--line);color:var(--dim);}
+.rs-note-stable{border-left-color:var(--green);color:var(--green);background:var(--green-bg);}
+.rs-note-good{border-left-color:rgba(61,191,128,.4);background:rgba(61,191,128,.04);}
+.round-delta{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;}
+.round-delta-item{font-size:.72rem;padding:3px 10px;border:1px solid;}
+.delta-new{border-color:rgba(61,191,128,.3);color:var(--green);background:var(--green-bg);}
+.delta-lost{border-color:rgba(224,90,90,.3);color:var(--red);background:var(--red-bg);}
+/* Student round cards */
+.st-round{margin-bottom:1.5rem;border:1px solid var(--line);background:var(--dark);overflow:hidden;}
+.st-round-held{border-left:3px solid var(--amber);}
+.st-round-rejected{border-left:3px solid rgba(224,90,90,.45);}
+.st-round-hdr{display:flex;align-items:center;justify-content:space-between;padding:.85rem 1.25rem;border-bottom:1px solid var(--line2);}
+.st-round-num{font-family:var(--fd);font-size:.95rem;font-weight:900;letter-spacing:.1em;text-transform:uppercase;color:var(--dimmer);}
+.st-round-held .st-round-num{color:var(--amber);}
+.st-outcome-badge{font-size:.63rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;padding:3px 10px;border:1px solid;}
+.st-outcome-held{border-color:rgba(240,168,48,.4);color:var(--amber);background:var(--amber-bg);}
+.st-outcome-rejected{border-color:rgba(224,90,90,.4);color:var(--red);background:var(--red-bg);}
+.st-round-row{display:flex;border-bottom:1px solid var(--line2);}
+.st-round-row:last-child{border-bottom:none;}
+.st-round-cell{flex:1;padding:.8rem 1.25rem;}
+.st-round-cell+.st-round-cell{border-left:1px solid var(--line2);}
+.st-round-cell-lbl{font-size:.58rem;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:var(--dimmer);margin-bottom:.35rem;}
+.st-round-cell-val{font-size:.83rem;color:var(--dim);line-height:1.5;}
+.st-round-cell-val strong{color:var(--white);}
+.st-round-note{padding:.7rem 1.25rem;font-size:.77rem;}
+.st-note-tentative{color:var(--amber);background:rgba(240,168,48,.05);border-top:1px solid rgba(240,168,48,.12);}
+.st-note-rejected{color:var(--red);background:rgba(224,90,90,.04);border-top:1px solid rgba(224,90,90,.12);}
+.st-submitted-event{padding:1.25rem 0 1.5rem;border-bottom:1px solid var(--line2);margin-bottom:1.5rem;}
+.st-submitted-label{font-size:.6rem;font-weight:700;letter-spacing:.22em;text-transform:uppercase;color:var(--teal);margin-bottom:.3rem;}
+.st-submitted-text{font-family:var(--fd);font-size:1rem;font-weight:700;margin-bottom:.25rem;}
+.st-submitted-sub{font-size:.79rem;color:var(--dim);line-height:1.5;}
+.st-final-result{margin-top:2rem;padding:1.75rem;background:rgba(61,191,184,.05);border:1px solid rgba(61,191,184,.3);}
+.st-final-header{font-family:var(--fd);font-size:.65rem;font-weight:700;letter-spacing:.28em;text-transform:uppercase;color:var(--teal);margin-bottom:1.25rem;padding-bottom:.75rem;border-bottom:1px solid rgba(61,191,184,.2);}
+.st-final-note{font-size:.77rem;color:var(--dim);line-height:1.6;margin-top:.85rem;padding-top:.75rem;border-top:1px solid rgba(61,191,184,.15);}
 
 /* ── ADMIN: RESULTS ── */
 .results-wrap{padding:2.5rem 2rem;max-width:1200px;margin:0 auto;}
@@ -755,24 +814,87 @@ function refreshStatus(){
 function renderStatusFromResult(d){
   document.getElementById('st-sub').textContent='Tracking: '+d.name;
   var tl=document.getElementById('st-tl');
-  tl.innerHTML=(d.timeline||[]).map(function(ev){
-    var dot=ev.type==='final'?'done':ev.type==='held'?'act':'';
-    return'<div class="tl-item">'+
-      '<div class="tl-dot '+dot+'"></div>'+
-      '<div>'+
-        '<div class="tl-lbl">'+ev.text+'</div>'+
-        '<div class="tl-sub">'+ev.sub+'</div>'+
-        (ev.held?'<div class="held-badge">Tentatively held by '+ev.held+'</div>':'')+
-      '</div></div>';
-  }).join('');
+  var events=d.timeline||[];
+  var html='';
+
+  // separate submitted event from round events
+  var preEvs=[],roundEvs=[];
+  events.forEach(function(ev){
+    if(ev.type==='submitted'){preEvs.push(ev);}
+    else{
+      var m=ev.text&&ev.text.match(/Round (\d+)/i);
+      ev._round=m?parseInt(m[1]):null;
+      roundEvs.push(ev);
+    }
+  });
+
+  // show submitted event
+  preEvs.forEach(function(ev){
+    html+='<div class="st-submitted-event">'+
+      '<div class="st-submitted-label">Application</div>'+
+      '<div class="st-submitted-text">'+ev.text+'</div>'+
+      '<div class="st-submitted-sub">'+ev.sub+'</div>'+
+    '</div>';
+  });
+
+  // group round events by round number
+  var roundGroups={};
+  roundEvs.forEach(function(ev){
+    if(ev._round===null)return;
+    if(!roundGroups[ev._round])roundGroups[ev._round]=[];
+    roundGroups[ev._round].push(ev);
+  });
+
+  // render each round as a card
+  var roundNums=Object.keys(roundGroups).map(Number).sort(function(a,b){return a-b;});
+  roundNums.forEach(function(rNum){
+    var evs=roundGroups[rNum];
+    var heldEv=evs.find(function(e){return e.type==='held';});
+    var rejEv=evs.find(function(e){return e.type==='rejected';});
+    var outcome=heldEv?'held':rejEv?'rejected':null;
+    var heldAt=heldEv?heldEv.held:null;
+
+    // lab applied to
+    var appliedTo=null;
+    if(rejEv){var m=rejEv.text.match(/Rejected from (.+)$/);appliedTo=m?m[1]:null;}
+    else if(heldAt){appliedTo=heldAt;}
+
+    var roundClass='st-round'+(outcome==='held'?' st-round-held':outcome==='rejected'?' st-round-rejected':'');
+    var badge=outcome==='held'?'<span class="st-outcome-badge st-outcome-held">Tentatively Held</span>':
+              outcome==='rejected'?'<span class="st-outcome-badge st-outcome-rejected">Rejected</span>':'';
+
+    var actionVal=appliedTo?'Applied to <strong>'+appliedTo+'</strong>':'—';
+    var outcomeVal=outcome==='held'?'Held by <strong>'+heldAt+'</strong> — lab kept you after evaluating all applicants':
+                   outcome==='rejected'?'Not kept — a higher-priority applicant took your spot':'—';
+
+    var note='';
+    if(outcome==='held'){
+      note='<div class="st-round-note st-note-tentative">This is not final. You could still be replaced by a higher-priority applicant in a later round.</div>';
+    } else if(outcome==='rejected'){
+      note='<div class="st-round-note st-note-rejected">You will apply to your next choice in the following round.</div>';
+    }
+
+    html+='<div class="'+roundClass+'">'+
+      '<div class="st-round-hdr"><div class="st-round-num">Round '+rNum+'</div>'+badge+'</div>'+
+      '<div class="st-round-row">'+
+        '<div class="st-round-cell"><div class="st-round-cell-lbl">Your Action</div><div class="st-round-cell-val">'+actionVal+'</div></div>'+
+        '<div class="st-round-cell"><div class="st-round-cell-lbl">Your Outcome</div><div class="st-round-cell-val">'+outcomeVal+'</div></div>'+
+      '</div>'+
+      note+
+    '</div>';
+  });
+
+  tl.innerHTML=html;
 
   var resEl=document.getElementById('st-result');
   if(d.phase==='finished'&&d.assignedLab&&resultsPublished){
     resEl.style.display='block';
-    resEl.innerHTML='<div class="result-card">'+
-      '<div class="result-label">Final Assignment</div>'+
+    resEl.innerHTML='<div class="st-final-result">'+
+      '<div class="st-final-header">The Process Is Over — Final Assignment</div>'+
+      '<div class="result-label">Your Lab</div>'+
       '<div class="result-lab">'+d.labName+'</div>'+
       '<div class="result-rank">'+rankWord(d.assignedRank)+' choice · Stable matching confirmed</div>'+
+      '<div class="st-final-note">No student has justified envy over your assignment. The Deferred Acceptance mechanism guarantees this is the best possible outcome given your honest preferences.</div>'+
     '</div>';
   } else {
     resEl.style.display='none';
@@ -904,7 +1026,10 @@ function publishResults(){
 function renderRoundsPanel(){
   var g=document.getElementById('rounds-grid');
   if(!adminRounds.length){
-    g.innerHTML='<div style="background:var(--dark);padding:2rem;color:var(--dimmer);font-size:.85rem;">No rounds yet. Run the algorithm from the Dashboard.</div>';
+    g.innerHTML='<div style="padding:2rem;color:var(--dimmer);font-size:.85rem;">No rounds yet. Run the algorithm from the Dashboard.</div>';
+    document.getElementById('r-disp').textContent='No rounds yet';
+    document.getElementById('prev-r').disabled=true;
+    document.getElementById('next-r').disabled=true;
     return;
   }
   var n=adminRounds.length;
@@ -914,18 +1039,97 @@ function renderRoundsPanel(){
 
   g.innerHTML=adminRounds.map(function(r,i){
     var isCur=i===roundViewIdx;
-    var evs='';
-    (r.proposals||[]).forEach(function(p){evs+='<div class="rc-ev ev-p">'+p.student+' → '+p.lab+'</div>';});
-    (r.rejections||[]).forEach(function(p){evs+='<div class="rc-ev ev-r">✗ '+p.student+' from '+p.lab+'</div>';});
-    (r.holds||[]).slice(0,4).forEach(function(h){evs+='<div class="rc-ev ev-h">◎ '+h.student+' held by '+h.lab+'</div>';});
-    var badges='<span class="rbadge rb-p">'+(r.proposals||[]).length+' proposals</span>';
-    if((r.rejections||[]).length)badges+=' <span class="rbadge rb-r">'+(r.rejections||[]).length+' rejected</span>';
-    if(!(r.proposals||[]).length)badges='<span class="rbadge rb-s">Stable</span>';
-    return'<div class="rcol'+(isCur?' cur':'')+'">'+
-      '<div class="rc-hdr"><div class="rc-num">R'+(i+1)+'</div><div>'+badges+'</div></div>'+
-      '<div class="rc-stat">'+(r.proposals||[]).length+' proposals · '+(r.rejections||[]).length+' rej · '+(r.holds||[]).length+' holds</div>'+
-      ((r.oversubscribed||[]).length?'<div class="rc-stat" style="color:var(--red)">Oversubscribed: '+(r.oversubscribed||[]).join(', ')+'</div>':'')+
-      '<div class="rc-evs">'+evs+'</div></div>';
+    var prevHolds=i>0?(adminRounds[i-1].holds||[]).map(function(h){return h.student;}):[];
+    var curHolds=(r.holds||[]).map(function(h){return h.student;});
+    var newHolds=curHolds.filter(function(s){return prevHolds.indexOf(s)===-1;});
+    var lostHolds=prevHolds.filter(function(s){return curHolds.indexOf(s)===-1;});
+    var isStable=!(r.proposals||[]).length;
+
+    // group holds by lab
+    var byLab={};
+    (r.holds||[]).forEach(function(h){if(!byLab[h.lab])byLab[h.lab]=[];byLab[h.lab].push(h.student);});
+
+    // unique proposers
+    var proposers=[],seenP={};
+    (r.proposals||[]).forEach(function(p){if(!seenP[p.student]){seenP[p.student]=true;proposers.push(p.student);}});
+
+    // status badge
+    var badge=isStable
+      ?'<span class="rbadge rb-s">Stable — No New Proposals</span>'
+      :(r.rejections||[]).length
+        ?'<span class="rbadge rb-r">'+(r.rejections||[]).length+' rejected</span>'
+        :'<span class="rbadge rb-p">'+(r.proposals||[]).length+' proposals</span>';
+
+    // ── START section
+    var startHTML='<div class="round-section"><div class="round-section-lbl">Start of Round</div>';
+    if(proposers.length){
+      startHTML+='<div class="rs-row"><div class="rs-key">Students without a placement, applying this round</div><div class="rs-val rs-val-blue">'+proposers.length+'</div></div>';
+      if(proposers.length<=14)startHTML+='<div class="rs-names">'+proposers.map(function(s){return'<span class="rs-name">'+s+'</span>';}).join('')+'</div>';
+    } else {
+      startHTML+='<div class="rs-note rs-note-stable">All students are tentatively placed — no unmatched applicants to process.</div>';
+    }
+    startHTML+='</div>';
+
+    // ── PROCESS section
+    var procHTML='<div class="round-section"><div class="round-section-lbl">What Happened This Round</div>';
+    if(isStable){
+      procHTML+='<div class="rs-note rs-note-stable">No proposals were made. The algorithm has reached stability.</div>';
+    } else {
+      if((r.proposals||[]).length){
+        procHTML+='<div class="rs-row"><div class="rs-key">Proposals submitted to labs</div><div class="rs-val rs-val-blue">'+(r.proposals||[]).length+'</div></div>';
+        procHTML+='<div class="round-evs">'+(r.proposals||[]).map(function(p){return'<div class="round-ev ev-proposal"><span class="ev-student">'+p.student+'</span><span class="ev-arrow">→</span><span class="ev-lab">'+p.lab+'</span></div>';}).join('')+'</div>';
+      }
+      if((r.rejections||[]).length){
+        procHTML+='<div class="rs-row" style="margin-top:14px"><div class="rs-key" style="color:var(--red)">Rejected by labs (will try next choice)</div><div class="rs-val rs-val-red">'+(r.rejections||[]).length+'</div></div>';
+        procHTML+='<div class="round-evs">'+(r.rejections||[]).map(function(p){return'<div class="round-ev ev-rejection"><span class="ev-student">'+p.student+'</span><span class="ev-arrow">✗</span><span class="ev-lab">'+p.lab+'</span></div>';}).join('')+'</div>';
+      }
+    }
+    procHTML+='</div>';
+
+    // ── END STATE section
+    var endHTML='<div class="round-section round-section-end"><div class="round-section-lbl round-section-lbl-end">State After Round '+(i+1)+'</div>';
+
+    // delta from previous round
+    if(i>0&&(newHolds.length||lostHolds.length)){
+      endHTML+='<div class="round-delta">';
+      if(newHolds.length)endHTML+='<div class="round-delta-item delta-new">+'+newHolds.length+' newly held: '+newHolds.slice(0,4).join(', ')+(newHolds.length>4?' …':'')+'</div>';
+      if(lostHolds.length)endHTML+='<div class="round-delta-item delta-lost">−'+lostHolds.length+' displaced: '+lostHolds.slice(0,4).join(', ')+(lostHolds.length>4?' …':'')+'</div>';
+      endHTML+='</div>';
+    }
+
+    // lab-by-lab state
+    var labKeys=Object.keys(byLab).sort();
+    if(labKeys.length){
+      endHTML+='<div class="lab-state-grid" style="margin-top:10px">';
+      labKeys.forEach(function(lab){
+        endHTML+='<div class="lab-state-row"><div class="lab-state-name">'+lab+'</div><div class="lab-state-students">';
+        byLab[lab].forEach(function(s){
+          var isNew=newHolds.indexOf(s)!==-1;
+          endHTML+='<span class="lab-student-chip'+(isNew?' lab-student-new':'')+'">'+(isNew?'<strong>'+s+'</strong>':s)+'</span>';
+        });
+        endHTML+='</div></div>';
+      });
+      endHTML+='</div>';
+    }
+
+    // unmatched / moving on
+    var rejNames=[],seenR={};
+    (r.rejections||[]).forEach(function(p){if(!seenR[p.student]){seenR[p.student]=true;rejNames.push(p.student);}});
+    if(rejNames.length){
+      endHTML+='<div class="rs-row" style="margin-top:12px"><div class="rs-key" style="color:var(--amber)">Moving to next choice next round</div><div class="rs-val rs-val-amber">'+rejNames.length+'</div></div>';
+      endHTML+='<div class="rs-names">'+rejNames.map(function(s){return'<span class="rs-name rs-name-amber">'+s+'</span>';}).join('')+'</div>';
+    } else if(isStable&&labKeys.length){
+      endHTML+='<div class="rs-note rs-note-stable" style="margin-top:10px">Stable matching achieved. All placements are final.</div>';
+    } else if(!isStable&&!rejNames.length&&labKeys.length){
+      endHTML+='<div class="rs-note rs-note-good" style="margin-top:10px">All students who proposed were accepted into a lab this round.</div>';
+    }
+
+    endHTML+='</div>';
+
+    return'<div class="round-block'+(isCur?' round-block-current':'')+'" id="round-block-'+i+'">'+
+      '<div class="round-block-hdr"><div class="round-block-num">Round '+(i+1)+'</div><div>'+badge+'</div></div>'+
+      startHTML+procHTML+endHTML+
+    '</div>';
   }).join('');
 }
 function stepR(dir){
@@ -933,7 +1137,11 @@ function stepR(dir){
   document.getElementById('r-disp').textContent='Round '+(roundViewIdx+1)+' of '+adminRounds.length;
   document.getElementById('prev-r').disabled=roundViewIdx<=0;
   document.getElementById('next-r').disabled=roundViewIdx>=adminRounds.length-1;
-  renderRoundsPanel();
+  document.querySelectorAll('.round-block').forEach(function(b,i){
+    b.classList.toggle('round-block-current',i===roundViewIdx);
+  });
+  var block=document.getElementById('round-block-'+roundViewIdx);
+  if(block)block.scrollIntoView({behavior:'smooth',block:'start'});
 }
 
 // ── RESULTS TABLE ─────────────────────────────────────────────────────────────
