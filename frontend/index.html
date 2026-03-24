@@ -321,9 +321,13 @@ body{font-family:var(--fb);background:var(--black);color:var(--white);min-height
 .prio-no-motiv{color:var(--dimmer);font-style:normal;opacity:.6;}
 .prio-score-wrap{display:flex;flex-direction:column;align-items:center;gap:5px;flex-shrink:0;}
 .prio-score-lbl{font-size:.58rem;font-weight:700;letter-spacing:.15em;text-transform:uppercase;color:var(--dimmer);}
-.prio-score-input{width:76px;text-align:center;padding:10px 6px;background:var(--mid);border:1px solid var(--line);font-family:var(--fd);font-size:1.4rem;font-weight:900;color:var(--white);outline:none;-webkit-appearance:none;appearance:none;}
-.prio-score-input:focus{border-color:var(--amber);color:var(--amber);}
-.prio-score-input::-webkit-inner-spin-button,.prio-score-input::-webkit-outer-spin-button{-webkit-appearance:none;}
+.prio-score-row{display:flex;align-items:center;gap:4px;}
+.prio-score-input{width:64px;text-align:center;padding:9px 4px;background:var(--mid);border:1px solid var(--line);font-family:var(--fd);font-size:1.35rem;font-weight:900;color:var(--white);outline:none;transition:border-color .15s,color .15s,background .15s;}
+.prio-score-input:focus{border-color:var(--amber);color:var(--amber);background:rgba(240,168,48,.07);}
+.prio-score-btn{width:30px;height:46px;background:var(--mid);border:1px solid var(--line);color:var(--dimmer);font-size:1.1rem;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s;flex-shrink:0;font-family:var(--fd);font-weight:900;line-height:1;}
+.prio-score-btn:hover{background:var(--dark);border-color:rgba(255,255,255,.25);color:var(--white);}
+@keyframes prioFlash{0%{background:rgba(240,168,48,.35);color:var(--amber);border-color:var(--amber);}100%{background:var(--mid);color:var(--white);border-color:var(--line);}}
+.prio-score-flash{animation:prioFlash .5s ease forwards;}
 .prio-panel-foot{padding:1.1rem 1.75rem;border-top:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:1rem;background:rgba(240,168,48,.025);}
 .prio-done-badge{font-size:.72rem;color:var(--green);padding:5px 12px;border:1px solid rgba(61,191,128,.3);background:var(--green-bg);}
 /* ── ADMIN PHASE STEPPER ── */
@@ -1152,23 +1156,50 @@ function renderPriorityPanel(subs){
       '</div>'+
       '<div class="prio-score-wrap">'+
         '<div class="prio-score-lbl">Score</div>'+
-        '<input class="prio-score-input" type="number" min="1" max="100" value="'+(s.priority||50)+'" data-id="'+s.id+'">'+
-        '<div style="font-size:.6rem;color:var(--dimmer)">1–100</div>'+
+        '<div class="prio-score-row">'+
+          '<button class="prio-score-btn" onclick="adjustPrio(this,-1)" tabindex="-1">−</button>'+
+          '<input class="prio-score-input" type="text" inputmode="numeric" maxlength="3" value="'+(s.priority||50)+'" data-id="'+s.id+'" onblur="clampPrioInput(this)">'+
+          '<button class="prio-score-btn" onclick="adjustPrio(this,1)" tabindex="-1">+</button>'+
+        '</div>'+
+        '<div style="font-size:.6rem;color:var(--dimmer)">1 – 100</div>'+
       '</div>'+
     '</div>';
   }).join('');
 }
+function clampPrioInput(inp){
+  var v=parseInt(inp.value);
+  if(isNaN(v)||v<1)v=1;
+  if(v>100)v=100;
+  inp.value=v;
+}
+function adjustPrio(btn,delta){
+  var inp=btn.parentNode.querySelector('.prio-score-input');
+  var v=parseInt(inp.value)||50;
+  v=Math.max(1,Math.min(100,v+delta));
+  inp.value=v;
+  inp.classList.remove('prio-score-flash');
+  void inp.offsetWidth;
+  inp.classList.add('prio-score-flash');
+}
 function randomizePriorities(){
-  var inputs=document.querySelectorAll('.prio-score-input');
-  inputs.forEach(function(inp){inp.value=Math.floor(Math.random()*100)+1;});
-  toast('All priorities randomized — confirm when ready.');
+  var inputs=Array.prototype.slice.call(document.querySelectorAll('.prio-score-input'));
+  // shuffle order so the cascade looks organic
+  inputs.forEach(function(inp,i){
+    setTimeout(function(){
+      inp.value=Math.floor(Math.random()*100)+1;
+      inp.classList.remove('prio-score-flash');
+      void inp.offsetWidth;
+      inp.classList.add('prio-score-flash');
+    },i*55);
+  });
 }
 function confirmPriorities(){
   var inputs=document.querySelectorAll('.prio-score-input');
   if(!inputs.length){toast('No submissions to assign priorities to.');return;}
   var priorities=[];
   inputs.forEach(function(inp){
-    priorities.push({id:inp.dataset.id,priority:Math.max(1,Math.min(100,parseInt(inp.value)||50))});
+    var v=parseInt(inp.value)||50;
+    priorities.push({id:inp.dataset.id,priority:Math.max(1,Math.min(100,v))});
   });
   var btn=document.getElementById('prio-confirm-btn');
   btn.disabled=true;btn.innerHTML='<span class="spin"></span>Confirming…';
