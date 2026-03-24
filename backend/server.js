@@ -166,7 +166,7 @@ app.get('/api/status', (req, res) => {
 });
 
 app.post('/api/submit', (req, res) => {
-  const { name, year, program, ranking } = req.body;
+  const { name, year, program, ranking, motivation } = req.body;
   if (!name || !ranking || ranking.length < 1)
     return res.status(400).json({ error: 'name and ranking required' });
 
@@ -182,6 +182,7 @@ app.post('/api/submit', (req, res) => {
     initials: mkInit(name),
     year: year || '1st Year',
     program: program || 'Other',
+    motivation: (motivation || '').trim(),
     ranking: ranking.filter(id => getL(id)),
     priority: yPrio(year) + Math.floor(Math.random() * 9) + 1,
     colorIdx,
@@ -217,18 +218,29 @@ app.get('/api/admin/submissions', (req, res) => {
   if (!isAdmin(req)) return res.status(401).json({ error: 'Unauthorized' });
   res.json(state.submissions.map(s => ({
     id: s.id, name: s.name, initials: s.initials,
-    year: s.year, program: s.program,
+    year: s.year, program: s.program, motivation: s.motivation || '',
     ranking: s.ranking, priority: s.priority, colorIdx: s.colorIdx,
     assignedLab: s.assignedLab, assignedRank: s.assignedRank,
     submittedAt: s.submittedAt,
   })));
 });
 
-// Step 1: Close submissions and initialise DA (assigns priorities)
+// Step 1: Close submissions, apply priorities (manual or random), init DA
 app.post('/api/admin/set-priorities', (req, res) => {
   if (!isAdmin(req)) return res.status(401).json({ error: 'Unauthorized' });
   if (state.phase !== 'collecting') return res.status(400).json({ error: 'Not in collecting phase' });
   if (!state.submissions.length) return res.status(400).json({ error: 'No submissions yet' });
+
+  const { priorities, randomize } = req.body || {};
+  if (randomize) {
+    state.submissions.forEach(s => { s.priority = Math.floor(Math.random() * 100) + 1; });
+  } else if (Array.isArray(priorities)) {
+    priorities.forEach(({ id, priority }) => {
+      const s = state.submissions.find(sub => sub.id === id);
+      if (s) s.priority = Math.max(1, Math.min(100, parseInt(priority) || 50));
+    });
+  }
+
   initDA();
   state.phase = 'priorities_set';
   res.json({ ok: true, submissionCount: state.submissions.length });

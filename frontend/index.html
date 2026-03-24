@@ -307,6 +307,25 @@ body{font-family:var(--fb);background:var(--black);color:var(--white);min-height
 .csub{font-size:.81rem;color:var(--dim);line-height:1.65;margin-bottom:1.4rem;}
 .ccls{padding:11px 30px;background:var(--teal);color:var(--black);border:none;font-family:var(--fd);font-size:.88rem;font-weight:900;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;}
 
+/* ── PRIORITY PANEL ── */
+.prio-panel{border:1px solid var(--line);background:var(--dark);overflow:hidden;}
+.prio-panel-hdr{padding:1.1rem 1.75rem;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:1rem;background:rgba(240,168,48,.03);}
+.prio-panel-title{font-family:var(--fd);font-size:.62rem;font-weight:700;letter-spacing:.22em;text-transform:uppercase;color:var(--amber);margin-bottom:.2rem;}
+.prio-panel-sub{font-size:.78rem;color:var(--dim);}
+.prio-student{display:flex;align-items:flex-start;gap:1.25rem;padding:1.1rem 1.75rem;border-bottom:1px solid var(--line2);}
+.prio-student:last-child{border-bottom:none;}
+.prio-info{flex:1;min-width:0;}
+.prio-name{font-weight:600;font-size:.88rem;margin-bottom:.15rem;}
+.prio-meta{font-size:.7rem;color:var(--dimmer);margin-bottom:.5rem;}
+.prio-motiv{font-size:.79rem;color:var(--dim);line-height:1.6;font-style:italic;padding:.55rem .85rem;background:var(--mid);border-left:2px solid var(--line);}
+.prio-no-motiv{color:var(--dimmer);font-style:normal;opacity:.6;}
+.prio-score-wrap{display:flex;flex-direction:column;align-items:center;gap:5px;flex-shrink:0;}
+.prio-score-lbl{font-size:.58rem;font-weight:700;letter-spacing:.15em;text-transform:uppercase;color:var(--dimmer);}
+.prio-score-input{width:76px;text-align:center;padding:10px 6px;background:var(--mid);border:1px solid var(--line);font-family:var(--fd);font-size:1.4rem;font-weight:900;color:var(--white);outline:none;-webkit-appearance:none;appearance:none;}
+.prio-score-input:focus{border-color:var(--amber);color:var(--amber);}
+.prio-score-input::-webkit-inner-spin-button,.prio-score-input::-webkit-outer-spin-button{-webkit-appearance:none;}
+.prio-panel-foot{padding:1.1rem 1.75rem;border-top:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:1rem;background:rgba(240,168,48,.025);}
+.prio-done-badge{font-size:.72rem;color:var(--green);padding:5px 12px;border:1px solid rgba(61,191,128,.3);background:var(--green-bg);}
 /* ── ADMIN PHASE STEPPER ── */
 .phase-steps{display:flex;align-items:stretch;gap:0;margin-bottom:2rem;border:1px solid var(--line);overflow:hidden;}
 .phase-step{flex:1;padding:.9rem 1rem;text-align:center;border-right:1px solid var(--line);background:var(--dark);}
@@ -513,6 +532,24 @@ body{font-family:var(--fb);background:var(--black);color:var(--white);min-height
           <div id="a-recent" style="display:flex;flex-direction:column;gap:5px;max-height:200px;overflow-y:auto;"></div>
         </div>
       </div>
+
+      <!-- Priority assignment panel -->
+      <div style="margin-top:2rem;" id="prio-section">
+        <div class="prio-panel">
+          <div class="prio-panel-hdr">
+            <div>
+              <div class="prio-panel-title">Priority Assignment</div>
+              <div class="prio-panel-sub">Set each student's score (1–100) before matching begins. Students never see these.</div>
+            </div>
+            <button class="abtn" id="prio-rand-btn" onclick="randomizePriorities()" style="background:var(--mid);color:var(--white);border:1px solid var(--line);">⚄ Randomize All</button>
+          </div>
+          <div id="prio-list"><div style="padding:2rem;color:var(--dimmer);font-size:.85rem;">No submissions yet.</div></div>
+          <div class="prio-panel-foot" id="prio-foot">
+            <div style="font-size:.78rem;color:var(--dimmer);" id="prio-foot-note">Scores are editable until you confirm.</div>
+            <button class="abtn primary" id="prio-confirm-btn" onclick="confirmPriorities()" disabled>Confirm Priorities &amp; Start Matching →</button>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -629,7 +666,7 @@ var AVATARS=[
 
 // ── STATE ───────────────────────────────────────────────────────────────────
 var userRanking=[], openLabId=null, myName=null;
-var adminRounds=[], adminResults=[], roundViewIdx=0;
+var adminRounds=[], adminResults=[], adminSubs=[], roundViewIdx=0;
 var pollTimer=null, resultsPublished=false;
 var serverPhase='collecting', serverRoundCount=0;
 
@@ -1010,7 +1047,7 @@ function updatePhaseUI(phase,roundCount,published){
   // Main action button
   var btn=document.getElementById('a-run-btn');
   if(phase==='collecting'){
-    btn.textContent='▶ Close Submissions & Set Priorities';
+    btn.textContent='▾ Assign Priorities Below';
     btn.disabled=false;
   } else if(phase==='priorities_set'){
     btn.textContent='▶ Run Round 1';
@@ -1057,6 +1094,7 @@ function updatePhaseUI(phase,roundCount,published){
   }
 }
 function updateAdminDash(subs){
+  adminSubs=subs;
   document.getElementById('ak-subs').textContent=subs.length;
   // demand map
   var demand={};LABS_DATA.forEach(function(l){demand[l.id]=0;});
@@ -1073,6 +1111,73 @@ function updateAdminDash(subs){
       '<div class="av" style="background:'+c.bg+';color:'+c.tc+';width:24px;height:24px;font-size:.58rem">'+s.initials+'</div>'+
       '<span>'+s.name+'</span><span style="color:var(--dimmer);margin-left:auto">'+s.year+'</span></div>';
   }).join('');
+  // priority panel
+  renderPriorityPanel(subs);
+}
+
+// ── PRIORITY PANEL ────────────────────────────────────────────────────────────
+function renderPriorityPanel(subs){
+  var list=document.getElementById('prio-list');
+  var confirmBtn=document.getElementById('prio-confirm-btn');
+  var randBtn=document.getElementById('prio-rand-btn');
+  var footNote=document.getElementById('prio-foot-note');
+  var locked=serverPhase!=='collecting';
+
+  if(locked){
+    list.innerHTML='<div style="padding:1.25rem 1.75rem;font-size:.8rem;color:var(--dim)">Priorities were confirmed. Scores are locked.</div>';
+    confirmBtn.disabled=true;confirmBtn.textContent='✓ Priorities Confirmed';
+    randBtn.disabled=true;
+    footNote.innerHTML='<span class="prio-done-badge">✓ Locked in</span>';
+    return;
+  }
+
+  if(!subs.length){
+    list.innerHTML='<div style="padding:2rem;color:var(--dimmer);font-size:.85rem;">No submissions yet.</div>';
+    confirmBtn.disabled=true;
+    return;
+  }
+
+  confirmBtn.disabled=false;randBtn.disabled=false;
+  list.innerHTML=subs.map(function(s){
+    var c=AVATARS[s.colorIdx%AVATARS.length];
+    var motiv=s.motivation?('<div class="prio-motiv">'+s.motivation+'</div>'):('<div class="prio-motiv prio-no-motiv">No motivation letter provided.</div>');
+    var rankPreview=(s.ranking||[]).slice(0,3).map(function(id){var l=getL(id);return l?l.name:id;}).join(', ');
+    return'<div class="prio-student">'+
+      '<div class="av" style="background:'+c.bg+';color:'+c.tc+';flex-shrink:0">'+s.initials+'</div>'+
+      '<div class="prio-info">'+
+        '<div class="prio-name">'+s.name+'</div>'+
+        '<div class="prio-meta">'+s.year+' · '+s.program+'</div>'+
+        motiv+
+        '<div style="font-size:.68rem;color:var(--dimmer);margin-top:.5rem;">Ranked: '+rankPreview+(s.ranking.length>3?' +more':'')+'</div>'+
+      '</div>'+
+      '<div class="prio-score-wrap">'+
+        '<div class="prio-score-lbl">Score</div>'+
+        '<input class="prio-score-input" type="number" min="1" max="100" value="'+(s.priority||50)+'" data-id="'+s.id+'">'+
+        '<div style="font-size:.6rem;color:var(--dimmer)">1–100</div>'+
+      '</div>'+
+    '</div>';
+  }).join('');
+}
+function randomizePriorities(){
+  var inputs=document.querySelectorAll('.prio-score-input');
+  inputs.forEach(function(inp){inp.value=Math.floor(Math.random()*100)+1;});
+  toast('All priorities randomized — confirm when ready.');
+}
+function confirmPriorities(){
+  var inputs=document.querySelectorAll('.prio-score-input');
+  if(!inputs.length){toast('No submissions to assign priorities to.');return;}
+  var priorities=[];
+  inputs.forEach(function(inp){
+    priorities.push({id:inp.dataset.id,priority:Math.max(1,Math.min(100,parseInt(inp.value)||50))});
+  });
+  var btn=document.getElementById('prio-confirm-btn');
+  btn.disabled=true;btn.innerHTML='<span class="spin"></span>Confirming…';
+  apiFetch('/api/admin/set-priorities',{method:'POST',body:JSON.stringify({priorities:priorities})}).then(function(d){
+    if(d.error){toast('Error: '+d.error);btn.disabled=false;btn.textContent='Confirm Priorities & Start Matching →';return;}
+    toast('Priorities confirmed. Ready to run Round 1.');
+    refreshAdminAll();
+    aTab('rounds',document.querySelectorAll('#sa .htab')[1]);
+  });
 }
 
 // ── ADMIN ACTIONS ────────────────────────────────────────────────────────────
@@ -1082,12 +1187,9 @@ function adminNextStep(){
   btn.innerHTML='<span class="spin"></span>Working…';
 
   if(serverPhase==='collecting'){
-    apiFetch('/api/admin/set-priorities',{method:'POST'}).then(function(d){
-      if(d.error){toast('Error: '+d.error);refreshAdminAll();return;}
-      toast('Priorities assigned. Ready to run Round 1.');
-      refreshAdminAll();
-      aTab('rounds',document.querySelectorAll('#sa .htab')[1]);
-    });
+    btn.disabled=false;btn.textContent='▾ Assign Priorities Below';
+    document.getElementById('prio-section').scrollIntoView({behavior:'smooth',block:'start'});
+    return;
 
   } else if(serverPhase==='priorities_set'||serverPhase==='running'){
     apiFetch('/api/admin/run-round',{method:'POST'}).then(function(d){
@@ -1122,7 +1224,7 @@ function adminReset(){
   if(!confirm('Reset all submissions and results?'))return;
   apiFetch('/api/admin/reset',{method:'POST'}).then(function(d){
     if(d.ok){
-      adminRounds=[];adminResults=[];resultsPublished=false;roundViewIdx=0;
+      adminRounds=[];adminResults=[];adminSubs=[];resultsPublished=false;roundViewIdx=0;
       serverPhase='collecting';serverRoundCount=0;
       document.getElementById('ak-subs').textContent='0';
       document.getElementById('ak-matched').textContent='—';
