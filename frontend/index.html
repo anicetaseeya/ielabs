@@ -307,6 +307,32 @@ body{font-family:var(--fb);background:var(--black);color:var(--white);min-height
 .csub{font-size:.81rem;color:var(--dim);line-height:1.65;margin-bottom:1.4rem;}
 .ccls{padding:11px 30px;background:var(--teal);color:var(--black);border:none;font-family:var(--fd);font-size:.88rem;font-weight:900;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;}
 
+/* ── ADMIN PHASE STEPPER ── */
+.phase-steps{display:flex;align-items:stretch;gap:0;margin-bottom:2rem;border:1px solid var(--line);overflow:hidden;}
+.phase-step{flex:1;padding:.9rem 1rem;text-align:center;border-right:1px solid var(--line);background:var(--dark);}
+.phase-step:last-child{border-right:none;}
+.phase-step.done{background:rgba(61,191,128,.06);}
+.phase-step.active{background:rgba(240,168,48,.06);outline:1px inset var(--amber);}
+.phase-step-num{font-family:var(--fd);font-size:.65rem;font-weight:900;letter-spacing:.15em;color:var(--dimmer);margin-bottom:3px;}
+.phase-step.done .phase-step-num{color:var(--green);}
+.phase-step.active .phase-step-num{color:var(--amber);}
+.phase-step-lbl{font-size:.72rem;font-weight:600;color:var(--dimmer);line-height:1.3;}
+.phase-step.done .phase-step-lbl{color:var(--dim);}
+.phase-step.active .phase-step-lbl{color:var(--white);}
+/* Student phase banner */
+.st-phase-banner{padding:.85rem 1.25rem;margin-bottom:1.5rem;border:1px solid;font-size:.79rem;display:flex;align-items:center;gap:10px;}
+.spb-collecting{border-color:var(--line);color:var(--dimmer);background:var(--dark);}
+.spb-priorities{border-color:rgba(74,158,255,.3);color:var(--blue);background:var(--blue-bg);}
+.spb-running{border-color:rgba(240,168,48,.3);color:var(--amber);background:var(--amber-bg);}
+.spb-stable{border-color:rgba(61,191,128,.3);color:var(--green);background:var(--green-bg);}
+.spb-finished{border-color:rgba(61,191,184,.3);color:var(--teal);background:rgba(61,191,184,.08);}
+.spb-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+.spb-collecting .spb-dot{background:var(--dimmer);}
+.spb-priorities .spb-dot{background:var(--blue);}
+.spb-running .spb-dot{background:var(--amber);animation:pulse .9s infinite;}
+.spb-stable .spb-dot{background:var(--green);}
+.spb-finished .spb-dot{background:var(--teal);}
+@keyframes pulse{0%,100%{opacity:1;}50%{opacity:.3;}}
 /* ── SPINNER / LOADING ── */
 .spin{display:inline-block;width:16px;height:16px;border:2px solid rgba(255,255,255,.2);border-top-color:var(--white);border-radius:50%;animation:spin .7s linear infinite;margin-right:6px;vertical-align:middle;}
 @keyframes spin{to{transform:rotate(360deg);}}
@@ -458,11 +484,18 @@ body{font-family:var(--fb);background:var(--black);color:var(--white);min-height
   <div class="panel active" id="ap-dashboard">
     <div class="dash-wrap">
       <div class="phase-bar">
-        <div><div class="phase-lbl">Current Phase</div><div class="phase-val" id="ap-phase">Collecting Preferences</div></div>
+        <div><div class="phase-lbl">Current Phase</div><div class="phase-val" id="ap-phase">Collecting Submissions</div></div>
         <div class="phase-acts">
-          <button class="abtn primary" id="a-run-btn" onclick="adminRunAll()">▶ Run DA Algorithm</button>
+          <button class="abtn primary" id="a-run-btn" onclick="adminNextStep()">▶ Close Submissions &amp; Set Priorities</button>
           <button class="abtn danger" onclick="adminReset()">↺ Reset Session</button>
         </div>
+      </div>
+      <div class="phase-steps" id="phase-steps">
+        <div class="phase-step active" id="ps-1"><div class="phase-step-num">01</div><div class="phase-step-lbl">Collecting Submissions</div></div>
+        <div class="phase-step" id="ps-2"><div class="phase-step-num">02</div><div class="phase-step-lbl">Priorities Assigned</div></div>
+        <div class="phase-step" id="ps-3"><div class="phase-step-num">03</div><div class="phase-step-lbl">Running Rounds</div></div>
+        <div class="phase-step" id="ps-4"><div class="phase-step-num">04</div><div class="phase-step-lbl">Stable Matching</div></div>
+        <div class="phase-step" id="ps-5"><div class="phase-step-num">05</div><div class="phase-step-lbl">Results Published</div></div>
       </div>
       <div class="kpi-row">
         <div class="kpi"><div class="kpi-val" id="ak-subs">0</div><div class="kpi-lbl">Submissions</div></div>
@@ -497,8 +530,12 @@ body{font-family:var(--fb);background:var(--black);color:var(--white);min-height
           <div class="status-chip chip-wait" id="algo-chip">Waiting</div>
         </div>
       </div>
+      <div id="round-next-action" style="display:none;margin-bottom:2rem;padding:1.25rem 1.75rem;background:rgba(240,168,48,.04);border:1px solid rgba(240,168,48,.25);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:1rem;">
+        <div><div style="font-size:.62rem;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:var(--amber);margin-bottom:.3rem;" id="rna-label">Ready</div><div style="font-size:.84rem;color:var(--dim);" id="rna-desc"></div></div>
+        <button class="abtn primary" id="rna-btn" onclick="adminNextStep()"></button>
+      </div>
       <div class="rounds-grid" id="rounds-grid">
-        <div style="background:var(--dark);padding:2rem;color:var(--dimmer);font-size:.85rem;">No rounds yet. Run the algorithm from the Dashboard.</div>
+        <div style="padding:2rem;color:var(--dimmer);font-size:.85rem;">No rounds yet. Set priorities from the Dashboard, then run rounds here.</div>
       </div>
     </div>
   </div>
@@ -594,6 +631,7 @@ var AVATARS=[
 var userRanking=[], openLabId=null, myName=null;
 var adminRounds=[], adminResults=[], roundViewIdx=0;
 var pollTimer=null, resultsPublished=false;
+var serverPhase='collecting', serverRoundCount=0;
 
 function getL(id){return LABS_DATA.find(function(l){return l.id===id;})||null;}
 function toast(m){var t=document.getElementById('toast');t.textContent=m;t.classList.add('show');setTimeout(function(){t.classList.remove('show');},3000);}
@@ -796,7 +834,7 @@ function pollResult(name){
   apiFetch('/api/result/'+encodeURIComponent(name)).then(function(d){
     if(d.error)return;
     renderStatusFromResult(d);
-    if(d.phase==='finished'&&d.assignedLab&&resultsPublished){
+    if(d.phase==='finished'&&d.assignedLab&&d.resultsPublished){
       clearInterval(pollTimer);
       document.getElementById('st-poll-note').style.display='none';
       showCongrats(d.name,d.labName,d.assignedRank,false);
@@ -816,6 +854,17 @@ function renderStatusFromResult(d){
   var tl=document.getElementById('st-tl');
   var events=d.timeline||[];
   var html='';
+
+  // Phase banner
+  var phaseBanners={
+    collecting:{cls:'spb-collecting',dot:true,text:'Your application is received. Waiting for all submissions to be collected.'},
+    priorities_set:{cls:'spb-priorities',dot:true,text:'Labs are reviewing applications and ranking candidates.'},
+    running:{cls:'spb-running',dot:true,text:'Matching in progress — Round '+(d.currentRound||0)+' complete. Your latest status is below.'},
+    stable:{cls:'spb-stable',dot:true,text:'The algorithm has reached a stable matching. Awaiting official confirmation.'},
+    finished:{cls:'spb-finished',dot:false,text:'Final results have been confirmed and published.'}
+  };
+  var pb=phaseBanners[d.phase]||phaseBanners.collecting;
+  html+='<div class="st-phase-banner '+pb.cls+'">'+(pb.dot?'<div class="spb-dot"></div>':'')+pb.text+'</div>';
 
   // separate submitted event from round events
   var preEvs=[],roundEvs=[];
@@ -887,7 +936,7 @@ function renderStatusFromResult(d){
   tl.innerHTML=html;
 
   var resEl=document.getElementById('st-result');
-  if(d.phase==='finished'&&d.assignedLab&&resultsPublished){
+  if(d.phase==='finished'&&d.assignedLab&&d.resultsPublished){
     resEl.style.display='block';
     resEl.innerHTML='<div class="st-final-result">'+
       '<div class="st-final-header">The Process Is Over — Final Assignment</div>'+
@@ -928,19 +977,84 @@ function refreshAdminAll(){
   apiFetch('/api/admin/rounds').then(function(r){
     if(!r||r.error)return;
     adminRounds=r;
+    if(document.getElementById('ap-rounds').classList.contains('active'))renderRoundsPanel();
   });
   apiFetch('/api/status').then(function(s){
     if(!s||s.error)return;
-    var phaseNames={collecting:'Collecting Preferences',running:'Running Algorithm',finished:'Stable Matching Achieved'};
-    document.getElementById('ap-phase').textContent=phaseNames[s.phase]||s.phase;
-    document.getElementById('ak-rounds').textContent=s.roundCount||'—';
-    if(s.phase==='finished'){
-      document.getElementById('a-run-btn').textContent='✓ Algorithm Complete';
-      document.getElementById('a-run-btn').disabled=true;
-      document.getElementById('algo-chip').className='status-chip chip-done';
-      document.getElementById('algo-chip').textContent='Stable';
-    }
+    serverPhase=s.phase;
+    serverRoundCount=s.roundCount||0;
+    resultsPublished=s.resultsPublished||false;
+    updatePhaseUI(s.phase,s.roundCount||0,s.resultsPublished||false);
   });
+}
+function updatePhaseUI(phase,roundCount,published){
+  var phaseNames={
+    collecting:'Collecting Submissions',
+    priorities_set:'Priorities Assigned — Ready to Run',
+    running:'Running — '+roundCount+' Round'+(roundCount!==1?'s':'')+' Complete',
+    stable:'Stable Matching Reached',
+    finished:'Results Published'
+  };
+  document.getElementById('ap-phase').textContent=phaseNames[phase]||phase;
+  document.getElementById('ak-rounds').textContent=roundCount||'—';
+
+  // Phase step indicators
+  var steps={collecting:1,priorities_set:2,running:3,stable:4,finished:5};
+  var cur=steps[phase]||1;
+  for(var i=1;i<=5;i++){
+    var el=document.getElementById('ps-'+i);
+    if(!el)continue;
+    el.className='phase-step'+(i<cur?' done':i===cur?' active':'');
+  }
+
+  // Main action button
+  var btn=document.getElementById('a-run-btn');
+  if(phase==='collecting'){
+    btn.textContent='▶ Close Submissions & Set Priorities';
+    btn.disabled=false;
+  } else if(phase==='priorities_set'){
+    btn.textContent='▶ Run Round 1';
+    btn.disabled=false;
+  } else if(phase==='running'){
+    btn.textContent='▶ Run Round '+(roundCount+1);
+    btn.disabled=false;
+  } else if(phase==='stable'){
+    btn.textContent='✦ Confirm & Publish Results';
+    btn.disabled=false;
+  } else if(phase==='finished'){
+    btn.textContent='✓ Results Published';
+    btn.disabled=true;
+  }
+
+  // Algo chip
+  var chip=document.getElementById('algo-chip');
+  if(phase==='collecting'||phase==='priorities_set'){chip.className='status-chip chip-wait';chip.textContent='Waiting';}
+  else if(phase==='running'){chip.className='status-chip chip-run';chip.textContent='Round '+roundCount+' done';}
+  else if(phase==='stable'||phase==='finished'){chip.className='status-chip chip-done';chip.textContent='Stable';}
+
+  // Round panel next-action bar
+  var rna=document.getElementById('round-next-action');
+  var rnaLbl=document.getElementById('rna-label');
+  var rnaDesc=document.getElementById('rna-desc');
+  var rnaBtn=document.getElementById('rna-btn');
+  if(phase==='priorities_set'){
+    rna.style.display='flex';
+    rnaLbl.textContent='Ready to begin';
+    rnaDesc.textContent='Priorities assigned. Run Round 1 to start matching.';
+    rnaBtn.textContent='▶ Run Round 1';
+  } else if(phase==='running'){
+    rna.style.display='flex';
+    rnaLbl.textContent='Round '+roundCount+' complete';
+    rnaDesc.textContent='Some students are still unmatched. Continue to Round '+(roundCount+1)+'.';
+    rnaBtn.textContent='▶ Run Round '+(roundCount+1);
+  } else if(phase==='stable'){
+    rna.style.display='flex';
+    rnaLbl.textContent='Stable matching reached';
+    rnaDesc.textContent='No further rounds needed. Confirm and publish to reveal results to students.';
+    rnaBtn.textContent='✦ Confirm & Publish Results';
+  } else {
+    rna.style.display='none';
+  }
 }
 function updateAdminDash(subs){
   document.getElementById('ak-subs').textContent=subs.length;
@@ -962,53 +1076,62 @@ function updateAdminDash(subs){
 }
 
 // ── ADMIN ACTIONS ────────────────────────────────────────────────────────────
-function adminRunAll(){
-  document.getElementById('a-run-btn').disabled=true;
-  document.getElementById('a-run-btn').innerHTML='<span class="spin"></span>Running…';
-  apiFetch('/api/admin/run',{method:'POST'}).then(function(d){
-    if(d.error){toast('Error: '+d.error);document.getElementById('a-run-btn').disabled=false;document.getElementById('a-run-btn').textContent='▶ Run DA Algorithm';return;}
-    adminRounds=[];
-    apiFetch('/api/admin/rounds').then(function(r){
-      if(r&&!r.error)adminRounds=r;
-      renderRoundsPanel();
+function adminNextStep(){
+  var btn=document.getElementById('a-run-btn');
+  btn.disabled=true;
+  btn.innerHTML='<span class="spin"></span>Working…';
+
+  if(serverPhase==='collecting'){
+    apiFetch('/api/admin/set-priorities',{method:'POST'}).then(function(d){
+      if(d.error){toast('Error: '+d.error);refreshAdminAll();return;}
+      toast('Priorities assigned. Ready to run Round 1.');
+      refreshAdminAll();
+      aTab('rounds',document.querySelectorAll('#sa .htab')[1]);
     });
-    apiFetch('/api/admin/results').then(function(r){
-      if(!r||r.error)return;
-      adminResults=r.submissions||[];
-      var matched=adminResults.filter(function(s){return s.assignedLab;}).length;
-      var got1=adminResults.filter(function(s){return s.assignedRank===1;}).length;
-      document.getElementById('ak-matched').textContent=matched;
-      document.getElementById('ak-first').textContent=matched?Math.round(got1/matched*100)+'%':'—';
-      document.getElementById('ak-rounds').textContent=d.rounds;
-      document.getElementById('stable-bar').style.display='flex';
-      document.getElementById('stable-sub').textContent='Stable matching in '+d.rounds+' round(s). '+matched+' students matched.';
-      renderResultsTable();
+
+  } else if(serverPhase==='priorities_set'||serverPhase==='running'){
+    apiFetch('/api/admin/run-round',{method:'POST'}).then(function(d){
+      if(d.error){toast('Error: '+d.error);refreshAdminAll();return;}
+      apiFetch('/api/admin/rounds').then(function(r){
+        if(r&&!r.error){adminRounds=r;renderRoundsPanel();}
+      });
+      if(d.stable){
+        toast('Round '+d.round+' — Stable matching reached! Confirm & publish when ready.');
+        apiFetch('/api/admin/results').then(function(r){
+          if(!r||r.error)return;
+          adminResults=r.submissions||[];
+          var matched=adminResults.filter(function(s){return s.assignedLab;}).length;
+          var got1=adminResults.filter(function(s){return s.assignedRank===1;}).length;
+          document.getElementById('ak-matched').textContent=matched;
+          document.getElementById('ak-first').textContent=matched?Math.round(got1/matched*100)+'%':'—';
+          document.getElementById('stable-bar').style.display='flex';
+          document.getElementById('stable-sub').textContent='Stable matching in '+d.round+' round(s). '+matched+' students matched.';
+          renderResultsTable();
+        });
+      } else {
+        toast('Round '+d.round+' complete — '+d.rejections+' rejected, '+d.holds+' held. Run next round.');
+      }
+      refreshAdminAll();
     });
-    document.getElementById('a-run-btn').textContent='✓ Algorithm Complete';
-    document.getElementById('ap-phase').textContent='Stable Matching Achieved';
-    document.getElementById('algo-chip').className='status-chip chip-done';
-    document.getElementById('algo-chip').textContent='Stable';
-    toast('DA complete! '+d.rounds+' rounds, '+d.matched+' students matched.');
-  });
+
+  } else if(serverPhase==='stable'){
+    publishResults();
+  }
 }
 function adminReset(){
   if(!confirm('Reset all submissions and results?'))return;
   apiFetch('/api/admin/reset',{method:'POST'}).then(function(d){
     if(d.ok){
       adminRounds=[];adminResults=[];resultsPublished=false;roundViewIdx=0;
-      document.getElementById('a-run-btn').textContent='▶ Run DA Algorithm';
-      document.getElementById('a-run-btn').disabled=false;
-      document.getElementById('ap-phase').textContent='Collecting Preferences';
+      serverPhase='collecting';serverRoundCount=0;
       document.getElementById('ak-subs').textContent='0';
-      document.getElementById('ak-rounds').textContent='—';
       document.getElementById('ak-matched').textContent='—';
       document.getElementById('ak-first').textContent='—';
       document.getElementById('stable-bar').style.display='none';
-      document.getElementById('algo-chip').className='status-chip chip-wait';
-      document.getElementById('algo-chip').textContent='Waiting';
       document.getElementById('r-disp').textContent='No rounds yet';
       document.getElementById('prev-r').disabled=true;
       document.getElementById('next-r').disabled=true;
+      document.getElementById('round-next-action').style.display='none';
       renderRoundsPanel();renderResultsTable();
       refreshAdminAll();
       toast('Session reset.');
@@ -1016,10 +1139,14 @@ function adminReset(){
   });
 }
 function publishResults(){
-  resultsPublished=true;
-  toast('Results published! Students can now see their assignments.');
-  document.getElementById('pub-btn').textContent='✓ Published';
-  document.getElementById('pub-btn').disabled=true;
+  apiFetch('/api/admin/publish',{method:'POST'}).then(function(d){
+    if(d.error){toast('Error: '+d.error);refreshAdminAll();return;}
+    resultsPublished=true;
+    toast('Results published! '+d.matched+' students can now see their assignments.');
+    document.getElementById('pub-btn').textContent='✓ Published';
+    document.getElementById('pub-btn').disabled=true;
+    refreshAdminAll();
+  });
 }
 
 // ── ROUNDS PANEL ─────────────────────────────────────────────────────────────
@@ -1171,6 +1298,9 @@ function checkServerStatus(){
   el.innerHTML='<span class="spin"></span>Checking backend…';
   fetch(API+'/api/status').then(function(r){return r.json();}).then(function(d){
     el.textContent='✦ Backend connected · Phase: '+(d.phase||'—')+' · Submissions: '+(d.submissionCount||0);
+    serverPhase=d.phase||'collecting';
+    serverRoundCount=d.roundCount||0;
+    resultsPublished=d.resultsPublished||false;
   }).catch(function(){
     el.textContent='⚠ Backend offline — start the Express server on port 3001';
     el.style.color='var(--red)';
